@@ -1,0 +1,9 @@
+name = "prototipo"
+uuid = "e69465c7-b724-4e6f-9e21-377b0f5d5ccd"
+authors = ["Lucas de Souza Khenayfis <lucaskhenayfis@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
+SDDP = "f4570300-c277-11e8-125c-4912f86ce65d"
+SDDPlab = "5c1c4b2a-157d-4661-af07-65cbafd6173d"
