@@ -44,25 +44,18 @@ end
 
 function jump2matrices(m::JuMP.Model)::Vector{Matrix}
 
-    md = lp_matrix_data(m)
-
-    # always removes epigraphical variable added last by SDDP.jl
-    variables = md.variables[1:end-1]
-    costs = get_costs(m, variables)
-    tech_mat = Matrix(md.A)[:, 1:end-1]
-    b_lower = md.b_lower
-    b_upper = md.b_upper
+    x, full_A, c, lb, ub = split_elements(m)
 
     # cleans out slacks
     # this is necessary because dualsddp is built for equality constraints only, which would demand
     # creating slacks of slacks after building the JuMP Model
     # too much work, can be fixed in inputs and should be better addressed in the backend
-    tech_mat, b_lower, b_upper = remove_slack_variables(variables, tech_mat, b_lower, b_upper)
+    full_A, lb, ub = remove_slack_variables(variables, full_A, lb, ub)
 
     # cleans out dummy variables (added but not used in any constraint)
-    variables, tech_mat, costs = remove_dummy_variables(variables, tech_mat, costs)
+    variables, full_A, costs = remove_dummy_variables(variables, full_A, costs)
 
-    bounds, affine = split_bounds_affine(tech_mat, b_lower, b_upper)
+    bounds, affine = split_bounds_affine(full_A, lb, ub)
 
     # checks if any affine constraints
 
@@ -79,6 +72,20 @@ function get_costs(m::JuMP.Model, variables::Vector{VariableRef})
     end
 
     return costs
+end
+
+function split_elements(m::JuMP.Model)
+    
+    md = lp_matrix_data(m)
+
+    # always removes epigraphical variable added last by SDDP.jl
+    variables = md.variables[1:end-1]
+    costs = get_costs(m, variables)
+    A = Matrix(md.A)[:, 1:end-1]
+    b_lower = md.b_lower
+    b_upper = md.b_upper
+
+    return variables, costs, A, b_lower, b_upper
 end
 
 """
