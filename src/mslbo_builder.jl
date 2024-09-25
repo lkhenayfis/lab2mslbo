@@ -57,10 +57,10 @@ function jump2matrices(m::JuMP.Model)::Vector{Matrix}
     # this is necessary because dualsddp is built for equality constraints only, which would demand
     # creating slacks of slacks after building the JuMP Model
     # too much work, can be fixed in inputs and should be better addressed in the backend
-    tech_mat, b_lower, b_upper = parse_slack_variables(variables, tech_mat, b_lower, b_upper)
+    tech_mat, b_lower, b_upper = remove_slack_variables(variables, tech_mat, b_lower, b_upper)
 
     # cleans out dummy variables (added but not used in any constraint)
-    variables, tech_mat, costs = parse_dummy_variables(variables, tech_mat, costs)
+    variables, tech_mat, costs = remove_dummy_variables(variables, tech_mat, costs)
 
     bounds, affine = split_bounds_affine(tech_mat, b_lower, b_upper)
 

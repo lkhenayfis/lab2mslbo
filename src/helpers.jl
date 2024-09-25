@@ -37,11 +37,11 @@ end
 # SANITAZING SLACK VARIABLES -----------------------------------------------------------------------
 
 """
-    parse_slack_variables
+    remove_slack_variables
 
 Find slack variables and remove them from the system matrices
 """
-function parse_slack_variables(variables::Vector{VariableRef},
+function remove_slack_variables(variables::Vector{VariableRef},
     A::Matrix, lower::Vector, upper::Vector)
 
     pattern = "_SLACK"
@@ -82,11 +82,11 @@ end
 # SANITIZING DUMMY VARIABLES -----------------------------------------------------------------------
 
 """
-    parse_dummy_variables
+    remove_dummy_variables
 
 Find dummy variables (not used in any constraint) and remove them from the system matrices
 """
-function parse_dummy_variables(variables::Vector{VariableRef}, A::Matrix, costs::Vector)
+function remove_dummy_variables(variables::Vector{VariableRef}, A::Matrix, costs::Vector)
 
     indexes = find_dummies(A)
     dummy_variables = variables[indexes]
