@@ -51,6 +51,13 @@ function jump2matrices(m::JuMP.Model)::Vector{Matrix}
     # creating slacks of slacks after building the JuMP Model
     # too much work, can be fixed in inputs and should be better addressed in the backend
     full_A, lb, ub = remove_variable_by_name(variables, "_SLACK", full_A, lb, ub)
+    
+    # outflow and net exchange are convenience variables meant to simplify outputs
+    # the reason they are cut off from the problem is for being unbounded, which causes problems in
+    # the dualsddp implementation
+    # given they serve no actual modeling purpose, it's easier to just remove them
+    full_A, lb, ub = remove_variable_by_name(variables, "_OUTFLOW", full_A, lb, ub)
+    full_A, lb, ub = remove_variable_by_name(variables, "_NET_EXCHANGE", full_A, lb, ub)
 
     # cleans out dummy variables (added but not used in any constraint)
     variables, full_A, costs = remove_dummy_variables(variables, full_A, costs)
