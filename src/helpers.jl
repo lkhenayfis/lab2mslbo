@@ -34,17 +34,16 @@ function paste_vector(v::Vector{String})
     return pasted
 end
 
-# SANITAZING SLACK VARIABLES -----------------------------------------------------------------------
+# SANITAZING VARIABLE BY NAME ----------------------------------------------------------------------
 
 """
-    remove_slack_variables
+    remove_variable_by_name
 
 Find slack variables and remove them from the system matrices
 """
-function remove_slack_variables(variables::Vector{VariableRef},
+function remove_variable_by_name(variables::Vector{VariableRef}, pattern::String,
     A::Matrix, lower::Vector, upper::Vector)
 
-    pattern = "_SLACK"
     indexes = get_variable_index(variables, pattern)
     slack_variables = variables[indexes]
 
