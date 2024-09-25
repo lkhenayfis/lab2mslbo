@@ -45,23 +45,8 @@ end
 function jump2matrices(m::JuMP.Model)::Vector{Matrix}
 
     x, full_A, c, lb, ub = split_elements(m)
-
-    # cleans out slacks
-    # this is necessary because dualsddp is built for equality constraints only, which would demand
-    # creating slacks of slacks after building the JuMP Model
-    # too much work, can be fixed in inputs and should be better addressed in the backend
-    full_A, lb, ub = remove_variable_by_name(variables, "_SLACK", full_A, lb, ub)
+    x, full_A, c, lb, ub = sanitize_variables(x, full_A, c, lb, ub)
     
-    # outflow and net exchange are convenience variables meant to simplify outputs
-    # the reason they are cut off from the problem is for being unbounded, which causes problems in
-    # the dualsddp implementation
-    # given they serve no actual modeling purpose, it's easier to just remove them
-    full_A, lb, ub = remove_variable_by_name(variables, "_OUTFLOW", full_A, lb, ub)
-    full_A, lb, ub = remove_variable_by_name(variables, "_NET_EXCHANGE", full_A, lb, ub)
-
-    # cleans out dummy variables (added but not used in any constraint)
-    variables, full_A, costs = remove_dummy_variables(variables, full_A, costs)
-
     bounds, affine = split_bounds_affine(full_A, lb, ub)
 
     # checks if any affine constraints
@@ -92,7 +77,27 @@ function split_elements(m::JuMP.Model)
     b_lower = md.b_lower
     b_upper = md.b_upper
 
-    return variables, costs, A, b_lower, b_upper
+    return variables, A, costs, b_lower, b_upper
+end
+
+function sanitize_variables(x, full_A, c, lb, ub)
+    # cleans out slacks
+    # this is necessary because dualsddp is built for equality constraints only, which would demand
+    # creating slacks of slacks after building the JuMP Model
+    # too much work, can be fixed in inputs and should be better addressed in the backend
+    full_A, lb, ub = remove_variable_by_name(x, "_SLACK", full_A, lb, ub)
+    
+    # outflow and net exchange are convenience variables meant to simplify outputs
+    # the reason they are cut off from the problem is for being unbounded, which causes problems in
+    # the dualsddp implementation
+    # given they serve no actual modeling purpose, it's easier to just remove them
+    full_A, lb, ub = remove_variable_by_name(x, "_OUTFLOW", full_A, lb, ub)
+    full_A, lb, ub = remove_variable_by_name(x, "_NET_EXCHANGE", full_A, lb, ub)
+
+    # cleans out dummy variables (added but not used in any constraint)
+    x, full_A, costs = remove_dummy_variables(x, full_A, costs)
+
+    return x, full_A, c, lb, ub
 end
 
 """
