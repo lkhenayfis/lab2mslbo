@@ -2,7 +2,7 @@
 
 julia_version = "1.9.1"
 manifest_format = "2.0"
-project_hash = "b4e1e35ed4dfda6f112d0a972ec0a4f9143eb38d"
+project_hash = "0834784aae68d4331d97c23be108364c8156fd36"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -373,6 +373,14 @@ version = "0.9.3"
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 version = "1.6.0"
+
+[[deps.DualSDDP]]
+deps = ["JuMP", "LinearAlgebra", "Random"]
+git-tree-sha1 = "c17bda45e735101eedbe67ff6ec4f04b941cbb74"
+repo-rev = "main"
+repo-url = "git@github.com:bfpc/DualSDDP.jl.git"
+uuid = "7f8d178f-c40c-4e8c-bfb1-3d30c9997f30"
+version = "0.1.0"
 
 [[deps.EpollShim_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
