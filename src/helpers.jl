@@ -66,7 +66,7 @@ Return vector of bools pointing in which lines of `A` at least one column in `i`
 function find_non_zero(i::Vector{Int}, A::Matrix)
     has_nonzero = Vector{Bool}()
     for row in eachrow(A)
-        push!(has_nonzero, sum(row[i]) > 0)
+        push!(has_nonzero, sum(row[i] .!= 0) > 0)
     end
 
     return has_nonzero
@@ -118,6 +118,26 @@ function warn_dummies(dv::Union{VariableRef,Vector{VariableRef}})
     warn_msg = "Found the following dummy variables: " * paste_vector(string.(dv))
     warn_msg *= "\n these and their associated constraints will be removed -- revise the inputs"
     @warn warn_msg
+end
+
+# NOISES -------------------------------------------------------------------------------------------
+
+function fix_ω(x, A, c, ub, node_noises)
+    # zeroes out any coefficients in A related to noise terms
+    ω_indices = get_variable_index(x, "ω_")
+    sp_constraints = find_non_zero(ω_indices, A)
+    A[:, ω_indices] .= 0
+
+    # rodar um remove_dummy_variables para limpar os ω_X
+    x, A, c = remove_dummy_variables(x, A, c)
+
+    B = length(node_noises)
+    ds = [copy(ub) for i in range(1, B)]
+    for (i, d) in enumerate(ds)
+        d[sp_constraints] .= node_noises[i]
+    end
+
+    return x, A, c, ds, sp_constraints
 end
 
 # LOWER/UPPER --------------------------------------------------------------------------------------

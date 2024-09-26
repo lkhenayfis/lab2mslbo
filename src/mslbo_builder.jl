@@ -42,15 +42,14 @@ function build_sddp_model(data_dir::String)::Tuple
     return model, SAA
 end
 
-function jump2matrices(m::JuMP.Model)::Vector{Matrix}
+function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})::Vector{Matrix}
 
     x, full_A, c, lb, ub = split_elements(m)
     x, full_A, c, lb, ub = sanitize_variables(x, full_A, c, lb, ub)
-    
-    bounds, affine = split_bounds_affine(full_A, lb, ub)
 
-    # checks if any affine constraints
+    x, full_A, c, ds, sp_c = fix_ω(x, full_A, c, ub, node_noises)
 
+    bounds, affine = split_bounds_affine(full_A, lb, ub, ds, sp_c)
 end
 
 # AUXILIARES ---------------------------------------------------------------------------------------
@@ -105,9 +104,11 @@ end
 
 Split a technology matrix A into submatrix of bound constraints and general constraints
 """
-function split_bounds_affine(technology::Matrix, lower::Vector, upper::Vector)::Tuple
+function split_bounds_affine(technology::Matrix, lower::Vector, upper::Vector,
+    ds::Vector{Vector{Float64}}, except::Vector{Bool})::Tuple
 
     lines_of_one = [is_line_of_one(r) for r in eachrow(technology)]
+    lines_of_one[except] .= false
 
     A_bounds = technology[lines_of_one, :]
     A_affine = technology[.!lines_of_one, :]
@@ -116,9 +117,9 @@ function split_bounds_affine(technology::Matrix, lower::Vector, upper::Vector)::
     l_affine = lower[.!lines_of_one]
 
     u_bounds = upper[lines_of_one]
-    u_affine = upper[.!lines_of_one]
+    ds = [d[.!lines_of_one] for d in ds]
 
-    return ((A_bounds, l_bounds, u_bounds), (A_affine, l_affine, u_affine))
+    return ((A_bounds, l_bounds, u_bounds), (A_affine, l_affine, ds))
 end
 
 function is_line_of_one(row)::Bool
