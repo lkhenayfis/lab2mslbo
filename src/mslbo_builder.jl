@@ -42,7 +42,7 @@ function build_sddp_model(data_dir::String)::Tuple
     return model, SAA
 end
 
-function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})::Vector{Matrix}
+function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})
 
     x, full_A, c, lb, ub = split_elements(m)
     x, full_A, c, lb, ub = sanitize_variables(x, full_A, c, lb, ub)
@@ -51,6 +51,12 @@ function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})::Vec
 
     bounds, affine = split_bounds_affine(full_A, lb, ub, ds, sp_c)
     bounds = fix_unbounded(bounds...)
+    
+    A, B, T = split_constraint_matrices(x, affine[1])
+
+    lower, upper = split_bounds(x, bounds...)
+
+    return A, B, T, ds, lower, upper
 end
 
 # AUXILIARES ---------------------------------------------------------------------------------------
