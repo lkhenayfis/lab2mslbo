@@ -1,5 +1,13 @@
-module prototipo
+module lab2mslbo
 
-greet() = print("Hello World!")
+using Random
+using SDDPlab
+using DualSDDP
+using SDDP, JuMP
 
-end # module prototipo
+include("helpers.jl")
+include("mslbo_builder.jl")
+
+export build_mslbo
+
+end
