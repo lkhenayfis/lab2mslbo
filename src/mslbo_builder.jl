@@ -54,9 +54,9 @@ function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})
     
     A, B, T = split_constraint_matrices(x, affine[1])
 
-    lower, upper = split_bounds(x, bounds...)
+    states_bounds, control_bounds = split_bounds(x, bounds...)
 
-    return A, B, T, ds, lower, upper
+    return A, B, T, c, ds, states_bounds, control_bounds
 end
 
 # AUXILIARES ---------------------------------------------------------------------------------------
@@ -197,11 +197,11 @@ function split_bounds(vars::Vector{VariableRef}, bound_mat::Matrix,
     sorted_lb = sort_by_selector_matrix(bound_mat, lb)
     sorted_ub = sort_by_selector_matrix(bound_mat, ub)
 
-    lb_states = sorted_lb[states,:]
-    ub_states = sorted_ub[states,:]
+    lb_states = vec(sorted_lb[states,:])
+    ub_states = vec(sorted_ub[states,:])
 
-    lb_control = sorted_lb[control,:]
-    ub_control = sorted_ub[control,:]
+    lb_control = vec(sorted_lb[control,:])
+    ub_control = vec(sorted_ub[control,:])
 
     return (lb_states, ub_states), (lb_control, ub_control)
 end
