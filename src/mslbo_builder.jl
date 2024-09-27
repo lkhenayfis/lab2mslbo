@@ -1,5 +1,6 @@
 using Random
 using SDDPlab
+using DualSDDP
 using SDDP, JuMP
 
 include("helpers.jl")
@@ -8,8 +9,16 @@ function build_mslbo(data_dir::String, seed::Integer = 1234)::DualSDDP.MSLBO
 
     Random.seed!(seed)
     aux, saa = build_sddp_model(data_dir)
-    # loop em aux.nodes extraindo as matrizes
-    # builda um MSLBO
+    
+    lbos = Vector{DualSDDP.SimpleLBO}()
+    for i in 1:length(aux.nodes)
+        A, B, T, c, ds, sb, cb = jump2matrices(aux.nodes[i].subproblem, saa[i])
+        probs = repeat([1], length(ds)) ./ length(ds)
+        lbo = DualSDDP.SimpleLBO(A, B, T, c, ds, sb[2], cb[2], 0, 1e5, 1e5, probs)
+        push!(lbos, lbo)
+    end
+
+    return DualSDDP.build(lbos)
 end
 
 """
