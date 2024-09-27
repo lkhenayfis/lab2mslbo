@@ -129,7 +129,7 @@ function split_bounds_affine(technology::Matrix, lower::Vector, upper::Vector,
     return ((A_bounds, l_bounds, u_bounds), (A_affine, l_affine, ds))
 end
 
-function split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)
+function get_state_control_indexes(vars::Vector{VariableRef})
     state_t = get_variable_index(vars, "_in")
     state_t_1 = get_variable_index(vars, "_out")
 
@@ -137,6 +137,12 @@ function split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)
     for i in range(1, length(vars))
         !((i in state_t) | (i in state_t_1)) ? push!(control, i) : nothing
     end
+
+    return state_t, state_t_1, control
+end
+
+function split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)
+    state_t, state_t_1, control = get_state_control_indexes(vars)
 
     A = tech_mat[:, state_t]
     B = tech_mat[:, state_t_1]
