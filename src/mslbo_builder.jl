@@ -50,6 +50,7 @@ function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})::Vec
     x, full_A, c, ds, sp_c = fix_ω(x, full_A, c, ub, node_noises)
 
     bounds, affine = split_bounds_affine(full_A, lb, ub, ds, sp_c)
+    bounds = fix_unbounded(bounds...)
 end
 
 # AUXILIARES ---------------------------------------------------------------------------------------
@@ -127,6 +128,22 @@ function split_bounds_affine(technology::Matrix, lower::Vector, upper::Vector,
     ds = [d[.!lines_of_one] for d in ds]
 
     return ((A_bounds, l_bounds, u_bounds), (A_affine, l_affine, ds))
+end
+
+function fix_unbounded(bound_mat::Matrix, lb::Vector{Float64}, ub::Vector{Float64})
+    Nvars = size(bound_mat)[2]
+    unbounded = mapslices(x -> sum(x), bound_mat, dims=[1])[1,:]
+    unbounded = findall(unbounded .== 0.0)
+
+    for u in unbounded
+        newrow = [i == u ? 1 : 0 for i in 1:Nvars]
+        bound_mat = cat(bound_mat, newrow'; dims=1)
+    end
+
+    lb = vcat(lb, repeat([0], length(unbounded)))
+    ub = vcat(ub, repeat([Inf], length(unbounded)))
+
+    return bound_mat, lb, ub
 end
 
 function get_state_control_indexes(vars::Vector{VariableRef})
