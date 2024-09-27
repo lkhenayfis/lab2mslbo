@@ -1,4 +1,9 @@
 
+"""
+    build_mslbo(data_dir::String; seed::Integer = 1234)::DualSDDP.MSLBO
+
+Build a `DualSDDP.MSLBO` object from a `SDDPlab` input data directory
+"""
 function build_mslbo(data_dir::String; seed::Integer = 1234)::DualSDDP.MSLBO
 
     Random.seed!(seed)
@@ -20,9 +25,15 @@ end
 
 Build a SDDP.PolicyGraph from which system matrices are extracted
 
-# Argumentos
+# Arguments
 
-  - `data_dir::String`: diretorio de um caso do lab
+  - `data_dir::String`: path to a `SDDPlab` case data directory
+
+# Returns
+
+A `Tuple` containing two elements: the first is an `SDDP.PolicyGraph` containing the full model;
+second is the Sample Average Aproximation built, i.e., noises for every stage, branch and random
+element (in that order) in a `Vector{Vector{Vector}}`
 """
 function build_sddp_model(data_dir::String)::Tuple
     original_wd = pwd()
@@ -45,7 +56,25 @@ function build_sddp_model(data_dir::String)::Tuple
     return model, SAA
 end
 
-function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})
+"""
+    jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})
+
+Convert a JuMP model and noise sample space to MSLBO compliant matrices
+
+# Arguments
+
+  - `m::JuMP.Model` the model of a given node in a `SDDP.PolicyGraph`, as built by 
+      `build_sddp_model`
+  - `node_noises::Vector{Vector{Float64}}` sample space of noises in a given node; this is an 
+      element of the SAA returned by `build_sddp_model`
+
+# Returns
+
+A `Tuple` containing, in order: matrices `A`, `B` and `T` as declared in `DualSDDP`; vector of
+costs, vector of vector of `d`s as declared in `DualSDDP`, tuple of states' lower and upper
+bounds and tuple of controls' lower and upper bounds, all vectors 
+"""
+function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})::Tuple
 
     x, full_A, c, lb, ub = split_elements(m)
     x, full_A, c, lb, ub = sanitize_variables(x, full_A, c, lb, ub)
