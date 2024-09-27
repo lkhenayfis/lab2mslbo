@@ -64,11 +64,11 @@ end
 
 # AUXILIARES ---------------------------------------------------------------------------------------
 
-function get_costs(m::JuMP.Model, variables::Vector{VariableRef})
+function get_costs(m::JuMP.Model, vars::Vector{VariableRef})
     terms = m.ext[:sddp_node].stage_objective.terms
-    costs = zeros(Float64, size(variables))
+    costs = zeros(Float64, size(vars))
     for (v, coef) in terms
-        index = findfirst(==(v), variables)
+        index = findfirst(==(v), vars)
         costs[index] = coef
     end
 
@@ -89,24 +89,24 @@ function split_elements(m::JuMP.Model)
     return variables, A, costs, b_lower, b_upper
 end
 
-function sanitize_variables(x, full_A, c, lb, ub)
+function sanitize_variables(vars, tech_mat, costs, b_lower, b_upper)
     # cleans out slacks
     # this is necessary because dualsddp is built for equality constraints only, which would demand
     # creating slacks of slacks after building the JuMP Model
     # too much work, can be fixed in inputs and should be better addressed in the backend
-    full_A, lb, ub = remove_variable_by_name(x, "_SLACK", full_A, lb, ub)
+    tech_mat, b_lower, b_upper = remove_variable_by_name(vars, "_SLACK", tech_mat, b_lower, b_upper)
     
     # outflow and net exchange are convenience variables meant to simplify outputs
     # the reason they are cut off from the problem is for being unbounded, which causes problems in
     # the dualsddp implementation
     # given they serve no actual modeling purpose, it's easier to just remove them
-    #full_A, lb, ub = remove_variable_by_name(x, "OUTFLOW", full_A, lb, ub) # if dropped breaks hydro balance
-    full_A, lb, ub = remove_variable_by_name(x, "NET_EXCHANGE", full_A, lb, ub)
+    #tech_mat, b_lower, b_upper = remove_variable_by_name(vars, "OUTFLOW", tech_mat, b_lower, b_upper) # if dropped breaks hydro balance
+    tech_mat, b_lower, b_upper = remove_variable_by_name(vars, "NET_EXCHANGE", tech_mat, b_lower, b_upper)
 
     # cleans out dummy variables (added but not used in any constraint)
-    x, full_A, c = remove_dummy_variables(x, full_A, c)
+    vars, tech_mat, costs = remove_dummy_variables(vars, tech_mat, costs)
 
-    return x, full_A, c, lb, ub
+    return vars, tech_mat, costs, b_lower, b_upper
 end
 
 function is_line_of_one(row)::Bool
@@ -121,19 +121,19 @@ end
 
 Split a technology matrix A into submatrix of bound constraints and general constraints
 """
-function split_bounds_affine(technology::Matrix, lower::Vector, upper::Vector,
+function split_bounds_affine(tech_mat::Matrix, b_lower::Vector, b_upper::Vector,
     ds::Vector{Vector{Float64}}, except::Vector{Bool})::Tuple
 
-    lines_of_one = [is_line_of_one(r) for r in eachrow(technology)]
+    lines_of_one = [is_line_of_one(r) for r in eachrow(tech_mat)]
     lines_of_one[except] .= false
 
-    A_bounds = technology[lines_of_one, :]
-    A_affine = technology[.!lines_of_one, :]
+    A_bounds = tech_mat[lines_of_one, :]
+    A_affine = tech_mat[.!lines_of_one, :]
 
-    l_bounds = lower[lines_of_one]
-    l_affine = lower[.!lines_of_one]
+    l_bounds = b_lower[lines_of_one]
+    l_affine = b_lower[.!lines_of_one]
 
-    u_bounds = upper[lines_of_one]
+    u_bounds = b_upper[lines_of_one]
     ds = [d[.!lines_of_one] for d in ds]
 
     return ((A_bounds, l_bounds, u_bounds), (A_affine, l_affine, ds))

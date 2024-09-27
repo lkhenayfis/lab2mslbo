@@ -41,21 +41,21 @@ end
 
 Find slack variables and remove them from the system matrices
 """
-function remove_variable_by_name(variables::Vector{VariableRef}, pattern::String,
-    A::Matrix, lower::Vector, upper::Vector)
+function remove_variable_by_name(vars::Vector{VariableRef}, pattern::String,
+    tech_mat::Matrix, b_lower::Vector, b_upper::Vector)
 
-    indexes = get_variable_index(variables, pattern)
-    slack_variables = variables[indexes]
+    indexes = get_variable_index(vars, pattern)
+    slack_variables = vars[indexes]
 
     if length(indexes) >= 1
         warn_slacks(slack_variables)
-        bool_drop = .!find_non_zero(indexes, A)
-        A = A[bool_drop, :]
-        lower = lower[bool_drop]
-        upper = upper[bool_drop]
+        bool_drop = .!find_non_zero(indexes, tech_mat)
+        tech_mat = tech_mat[bool_drop, :]
+        b_lower = b_lower[bool_drop]
+        b_upper = b_upper[bool_drop]
     end
 
-    return A, lower, upper
+    return tech_mat, b_lower, b_upper
 end
 
 """
@@ -85,19 +85,19 @@ end
 
 Find dummy variables (not used in any constraint) and remove them from the system matrices
 """
-function remove_dummy_variables(variables::Vector{VariableRef}, A::Matrix, costs::Vector)
+function remove_dummy_variables(vars::Vector{VariableRef}, tech_mat::Matrix, costs::Vector)
 
-    indexes = find_dummies(A)
-    dummy_variables = variables[indexes]
+    indexes = find_dummies(tech_mat)
+    dummy_variables = vars[indexes]
 
     if length(indexes) >= 1
         warn_dummies(dummy_variables)
-        variables = variables[.!indexes]
-        A = A[:, .!indexes]
+        vars = vars[.!indexes]
+        tech_mat = tech_mat[:, .!indexes]
         costs = costs[.!indexes]
     end
 
-    return variables, A, costs
+    return vars, tech_mat, costs
 end
 
 """
@@ -122,22 +122,22 @@ end
 
 # NOISES -------------------------------------------------------------------------------------------
 
-function fix_ω(x, A, c, ub, node_noises)
-    # zeroes out any coefficients in A related to noise terms
-    ω_indices = get_variable_index(x, "ω_")
-    sp_constraints = find_non_zero(ω_indices, A)
-    A[:, ω_indices] .= 0
+function fix_ω(vars, tech_mat, costs, b_upper, node_noises)
+    # zeroes out any coefficients in tech_mat related to noise terms
+    ω_indices = get_variable_index(vars, "ω_")
+    sp_constraints = find_non_zero(ω_indices, tech_mat)
+    tech_mat[:, ω_indices] .= 0
 
     # rodar um remove_dummy_variables para limpar os ω_X
-    x, A, c = remove_dummy_variables(x, A, c)
+    vars, tech_mat, costs = remove_dummy_variables(vars, tech_mat, costs)
 
     B = length(node_noises)
-    ds = [copy(ub) for i in range(1, B)]
+    ds = [copy(b_upper) for i in range(1, B)]
     for (i, d) in enumerate(ds)
         d[sp_constraints] .= node_noises[i]
     end
 
-    return x, A, c, ds, sp_constraints
+    return vars, tech_mat, costs, ds, sp_constraints
 end
 
 # LOWER/UPPER --------------------------------------------------------------------------------------
@@ -149,10 +149,10 @@ function check_equal_affine_bounds(lower::Vector, upper::Vector)
     end
 end
 
-function check_zero_lower_bound(lower::Vector, variables::Vector{VariableRef})
+function check_zero_lower_bound(lower::Vector, vars::Vector{VariableRef})
     is_zero = [l == 0 for l in lower]
     if sum(is_zero) != length(is_zero)
-        warn_msg = "Variables " * paste_vector(string.(variables[.!is_zero]))
+        warn_msg = "Variables " * paste_vector(string.(vars[.!is_zero]))
         warn_msg *= " have non-zero lower bound -- revise inputs"
         @warn warn_msg
     end
