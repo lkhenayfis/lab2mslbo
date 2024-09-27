@@ -1,5 +1,5 @@
 
-function build_mslbo(data_dir::String, seed::Integer = 1234)::DualSDDP.MSLBO
+function build_mslbo(data_dir::String; seed::Integer = 1234)::DualSDDP.MSLBO
 
     Random.seed!(seed)
     aux, saa = build_sddp_model(data_dir)
