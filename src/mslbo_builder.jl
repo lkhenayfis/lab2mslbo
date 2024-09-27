@@ -165,5 +165,37 @@ function split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)
     B = tech_mat[:, state_t_1]
     T = tech_mat[:, control]
 
-    return A, B, T, (state_t, state_t_1, control)
+    return A, B, T
+end
+
+function sort_by_selector_matrix(sel_mat::Matrix, v::Vector{Float64})
+    order_sel = Vector{Int}()
+
+    for row in eachrow(sel_mat)
+        ind = findfirst(row .== 1.0)
+        push!(order_sel, ind)
+    end
+
+    order = sortperm(order_sel)
+    sorted_v = v[order]
+
+    return sorted_v
+end
+
+function split_bounds(vars::Vector{VariableRef}, bound_mat::Matrix,
+    lb::Vector{Float64}, ub::Vector{Float64})
+
+    state_t, state_t_1, control = get_state_control_indexes(vars)
+    states = vcat(state_t, state_t_1)
+
+    sorted_lb = sort_by_selector_matrix(bound_mat, lb)
+    sorted_ub = sort_by_selector_matrix(bound_mat, ub)
+
+    lb_states = sorted_lb[states,:]
+    ub_states = sorted_ub[states,:]
+
+    lb_control = sorted_lb[control,:]
+    ub_control = sorted_ub[control,:]
+
+    return (lb_states, ub_states), (lb_control, ub_control)
 end
