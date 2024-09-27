@@ -93,7 +93,12 @@ end
 
 # AUXILIARES ---------------------------------------------------------------------------------------
 
-function get_costs(m::JuMP.Model, vars::Vector{VariableRef})
+"""
+    get_costs(m::JuMP.Model, vars::Vector{VariableRef})::Vector
+
+Extract vector of costs from a `JuMP.Model` built for a `SDDP.PolicyGraph`
+"""
+function get_costs(m::JuMP.Model, vars::Vector{VariableRef})::Vector
     terms = m.ext[:sddp_node].stage_objective.terms
     costs = zeros(Float64, size(vars))
     for (v, coef) in terms
@@ -104,7 +109,22 @@ function get_costs(m::JuMP.Model, vars::Vector{VariableRef})
     return costs
 end
 
-function split_elements(m::JuMP.Model)
+"""
+    split_elements(m::JuMP.Model)::Tuple
+
+Split a `JuMP.Model` into it's composing elements: costs, constraints matrix and bounds
+
+# Arguments
+
+  - `m::JuMP.Model` model built for a `SDDP.PolicyGraph`, as returned in nodes of `build_sddp_model`
+
+# Returns
+
+A `Tuple` containing, in order: vector of subproblem variables (`Vector{VariableRef}`), technology
+matrix, vector of costs, vector of lower and upper bounds on the constraints, as in
+described in `JuMP.lp_matrix_data`
+"""
+function split_elements(m::JuMP.Model)::Tuple
     
     md = lp_matrix_data(m)
 
@@ -118,7 +138,38 @@ function split_elements(m::JuMP.Model)
     return variables, A, costs, b_lower, b_upper
 end
 
-function sanitize_variables(vars, tech_mat, costs, b_lower, b_upper)
+"""
+    sanitize_variables(vars, tech_mat, costs, b_lower, b_upper)
+
+Clean some variables to fit within the `DualSDDP` problem specification
+
+Specifically, this function removes variables and constraints in which they are included, otherwise
+errors would be induced.
+
+It first removes slack variables, which don't fit within `DualSDDP`'s problem specification directly
+(demands some manipulation and inclusion of slacks of slacks, after building the JuMP.Models which
+is not worth the trouble). Then the `NET_EXCHANGE` variable is removed, as it's simply a convenience
+variable and should be converted into an AffineExpression in JuMP eventually. Finally are removed
+what are called 'dummy variables', i.e. variables which don't appear in any constraint. This can
+happen after earlier removals and also is the case of `LOAD`, which is included as a decision
+variable in preparation for it being stochastic.
+
+# Arguments
+
+All arguments of this function are the elements returned by `split_elements`, in the same order:
+
+  - `vars::Vector{VariableRef}` problem variables
+  - `tech_mat::Matrix` technology matrix
+  - `costs::Vector{Float64}` vector of costs
+  - `b_lower::Vector{Float64}` constraints lower bounds
+  - `b_upper::Vector{Float64}` constraints upper bounds
+
+# Returns
+
+A `Tuple` of it's arguments, in the same order, after removal of variables
+"""
+function sanitize_variables(vars::Vector{VariableRef}, tech_mat::Matrix,
+    costs::Vector{Float64}, b_lower::Vector{Float64}, b_upper::Vector{Float64})::Tuple
     # cleans out slacks
     # this is necessary because dualsddp is built for equality constraints only, which would demand
     # creating slacks of slacks after building the JuMP Model
@@ -138,6 +189,11 @@ function sanitize_variables(vars, tech_mat, costs, b_lower, b_upper)
     return vars, tech_mat, costs, b_lower, b_upper
 end
 
+"""
+    is_line_of_one(row)::Bool
+
+Check if a matrix line `row` has only one element and it is equal to 1
+"""
 function is_line_of_one(row)::Bool
     num_not_zero = sum(row .!= 0.0)
     equals_one = sum(row .== 1.0)
@@ -146,9 +202,37 @@ function is_line_of_one(row)::Bool
 end
 
 """
-    split_full_A(mat::Matrix)::Tuple{Matrix}
+    split_bounds_affine
 
-Split a technology matrix A into submatrix of bound constraints and general constraints
+Split composing elements into the `affine` and `bounds` section
+
+Usually `JuMP.lp_matrix_data` returns box constraints in a separate element from the upper and lower
+bounds on constraints. However, `SDDPlab` declares variables in a way which doesn't allow for this
+representation, thus mixing into the model what are actual affine constraints and simple box ones.
+This function splits the tecnology matrix, lower and upper bounds on constraints into these two
+sections
+
+The final two arguments benefit from extra details. `ds` is a Vector{Vector} where inner vectors are
+but the rhs of equality constraints, but with the term corresponding to the stochastic process
+constraint modified to a noise value. This collection of vectors represents all possible variations
+of rhs in a given stage. `except` is a convenience argument, needed because in the simplest cases
+the stochastic process constraint appears to be a bounds one, as it only concerns one variable with
+corresponding coefficient 1.
+
+# Arguments
+
+  - `tech_mat::Matrix` technology matrix
+  - `b_lower::Vector{Float64}` constraints lower bounds
+  - `b_upper::Vector{Float64}` constraints upper bounds
+  - `ds::Vector{Vector{Float64}}` variations of the rhs in equality constraints
+  - `except::Vector{Bool}` a vector indicating which lines of `tech_mat` should be excluded from
+    inference of wether it is a bounds or affine constraint (used directly as affine)
+
+# Return
+
+A `Tuple` containing two `Tuple`s: the first contains the box constraints section of the technology
+matrix, lower and upper; the second is the safe, but for affine constraints, except for the final
+element: instead of upper, it is the collection `ds` subseted in the positions of affine constraints
 """
 function split_bounds_affine(tech_mat::Matrix, b_lower::Vector, b_upper::Vector,
     ds::Vector{Vector{Float64}}, except::Vector{Bool})::Tuple
@@ -168,7 +252,24 @@ function split_bounds_affine(tech_mat::Matrix, b_lower::Vector, b_upper::Vector,
     return ((A_bounds, l_bounds, u_bounds), (A_affine, l_affine, ds))
 end
 
-function fix_unbounded(bound_mat::Matrix, lb::Vector{Float64}, ub::Vector{Float64})
+"""
+    fix_unbounded(bound_mat::Matrix, lb::Vector{Float64}, ub::Vector{Float64})
+
+Add upper bound at Infinity for any unbounded variables in the problem
+
+# Arguments
+
+All arguments are, in order, the first returned `Tuple` from `split_bounds_affine`
+
+  - `bound_mat::Matrix` section of technology matrix regarding box constraints
+  - `lb::Vector{Float64}` section of lower bounds regarding box constraints
+  - `ub::Vector{Float64}` section of upper bounds regarding box constraints
+
+# Return
+
+A `Tuple` of it's arguments, in the same order, after inclusion of new bounds
+"""
+function fix_unbounded(bound_mat::Matrix, lb::Vector{Float64}, ub::Vector{Float64})::Tuple
     Nvars = size(bound_mat)[2]
     unbounded = mapslices(x -> sum(x), bound_mat, dims=[1])[1,:]
     unbounded = findall(unbounded .== 0.0)
@@ -184,7 +285,13 @@ function fix_unbounded(bound_mat::Matrix, lb::Vector{Float64}, ub::Vector{Float6
     return bound_mat, lb, ub
 end
 
-function get_state_control_indexes(vars::Vector{VariableRef})
+"""
+    get_state_control_indexes(vars::Vector{VariableRef})::Tuple
+
+Return `Tuple` of three vectors: position of current state, last state and control variables in the
+vector of variables extracted from the `JuMP.Model`
+"""
+function get_state_control_indexes(vars::Vector{VariableRef})::Tuple
     state_t = get_variable_index(vars, "_in")
     state_t_1 = get_variable_index(vars, "_out")
 
@@ -196,6 +303,17 @@ function get_state_control_indexes(vars::Vector{VariableRef})
     return state_t, state_t_1, control
 end
 
+"""
+    split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)::Tuple
+
+Return `Tuple` of matrices `A`, `B` and `T` as specified in `DualSDDP`
+
+# Arguments
+
+  - `vars::Vector{VariableRef}` subproblem variables
+  - `tech_mat::Matrix` technology matrix OF THE AFFINE SECTION, as returned from
+    `split_bounds_affine`
+"""
 function split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)
     state_t, state_t_1, control = get_state_control_indexes(vars)
 
@@ -206,7 +324,25 @@ function split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)
     return A, B, T
 end
 
-function sort_by_selector_matrix(sel_mat::Matrix, v::Vector{Float64})
+"""
+    sort_by_selector_matrix(sel_mat::Matrix, v::Vector{Float64})::Vector{Float64}
+
+Return a reordering of vector `v` based on a selector matrix `sel_mat`
+
+Following the discussion in `split_bounds_affine`, there is still one additional complication
+regarding box constraints. It's section of the technology matrix isn't ordered to be diagonal, thus
+the vectors of lower and upper bounds are misaligned with the vector of variables. Given in
+`DualSDDP` we never declare variables directly, only system matrices from which variables are
+inferred, consistency in order of variables must be mantained between affine and box. This function
+exists to reorder lower and upper bounds accordingly.
+
+# Arguments
+
+  - `sel_mat::Matrix` a selection matrix, i.e. the section of box contraints from the technology
+    matrix
+  - `v::Vector{Float64}` a vector to be reordered
+"""
+function sort_by_selector_matrix(sel_mat::Matrix, v::Vector{Float64})::Vector{Float64}
     order_sel = Vector{Int}()
 
     for row in eachrow(sel_mat)
@@ -220,8 +356,26 @@ function sort_by_selector_matrix(sel_mat::Matrix, v::Vector{Float64})
     return sorted_v
 end
 
+"""
+    split_bounds(vars, bound_mat, lb, ub)
+
+Split lower and upper bounds vectors into ones for state and control variables separately
+
+# Arguments
+
+  - `vars::Vector{VariableRef}` subproblem variables
+  - `bound_mat::Matrix` technology matrix section of box constraints as returned in
+    `split_bounds_affine`
+  - `lb::Vector{Float64}` section of lower bounds regarding box constraints
+  - `ub::Vector{Float64}` section of upper bounds regarding box constraints
+
+# Returns
+
+A `Tuple` of two `Tuples` each containing lower and upper bounds (in this order) for state and
+control variables (in this order as well)
+"""
 function split_bounds(vars::Vector{VariableRef}, bound_mat::Matrix,
-    lb::Vector{Float64}, ub::Vector{Float64})
+    lb::Vector{Float64}, ub::Vector{Float64})::Tuple
 
     state_t, state_t_1, control = get_state_control_indexes(vars)
     states = vcat(state_t, state_t_1)
