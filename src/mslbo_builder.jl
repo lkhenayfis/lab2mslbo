@@ -90,7 +90,7 @@ function sanitize_variables(x, full_A, c, lb, ub)
     # the reason they are cut off from the problem is for being unbounded, which causes problems in
     # the dualsddp implementation
     # given they serve no actual modeling purpose, it's easier to just remove them
-    full_A, lb, ub = remove_variable_by_name(x, "OUTFLOW", full_A, lb, ub)
+    #full_A, lb, ub = remove_variable_by_name(x, "OUTFLOW", full_A, lb, ub) # if dropped breaks hydro balance
     full_A, lb, ub = remove_variable_by_name(x, "NET_EXCHANGE", full_A, lb, ub)
 
     # cleans out dummy variables (added but not used in any constraint)
