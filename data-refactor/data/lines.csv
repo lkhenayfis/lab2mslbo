@@ -1,0 +1,2 @@
+id, name ,source_bus_id ,target_bus_id ,capacity ,exchange_penalty
+ 1,  "TR",            1 ,            2 ,     100 ,           0.001
