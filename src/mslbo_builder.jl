@@ -99,6 +99,13 @@ function sanitize_variables(x, full_A, c, lb, ub)
     return x, full_A, c, lb, ub
 end
 
+function is_line_of_one(row)::Bool
+    num_not_zero = sum(row .!= 0.0)
+    equals_one = sum(row .== 1.0)
+
+    return (num_not_zero == 1) & (equals_one == 1)
+end
+
 """
     split_full_A(mat::Matrix)::Tuple{Matrix}
 
@@ -122,10 +129,18 @@ function split_bounds_affine(technology::Matrix, lower::Vector, upper::Vector,
     return ((A_bounds, l_bounds, u_bounds), (A_affine, l_affine, ds))
 end
 
-function is_line_of_one(row)::Bool
-    num_not_zero = sum(row .!= 0.0)
-    equals_one = sum(row .== 1.0)
+function split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)
+    state_t = get_variable_index(vars, "_in")
+    state_t_1 = get_variable_index(vars, "_out")
 
-    return (num_not_zero == 1) & (equals_one == 1)
+    control = Vector{Int}()
+    for i in range(1, length(vars))
+        !((i in state_t) | (i in state_t_1)) ? push!(control, i) : nothing
+    end
+
+    A = tech_mat[:, state_t]
+    B = tech_mat[:, state_t_1]
+    T = tech_mat[:, control]
+
+    return A, B, T, (state_t, state_t_1, control)
 end
-
