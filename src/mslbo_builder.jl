@@ -3,8 +3,15 @@
     build_mslbo(data_dir::String; seed::Integer = 1234)::DualSDDP.MSLBO
 
 Build a `DualSDDP.MSLBO` object from a `SDDPlab` input data directory
+
+# Arguments
+
+  - `data_dir::String` directory containig `SDDPlab` compliant input files
+  - `problem_ub::Vector{Float64}`: Upper bound on the value of the problem at each stage
+  - `α::Vector{Float64}`: Upper bound on the Lipschitz constant at each stage
 """
-function build_mslbo(data_dir::String; seed::Integer = 1234)::DualSDDP.MSLBO
+function build_mslbo(data_dir::String, problem_ub::Float64, α::Float64;
+    seed::Integer = 1234)::DualSDDP.MSLBO
 
     Random.seed!(seed)
     aux, saa = build_sddp_model(data_dir)
@@ -13,7 +20,7 @@ function build_mslbo(data_dir::String; seed::Integer = 1234)::DualSDDP.MSLBO
     for i in 1:length(aux.nodes)
         A, B, T, c, ds, sb, cb = jump2matrices(aux.nodes[i].subproblem, saa[i])
         probs = repeat([1], length(ds)) ./ length(ds)
-        lbo = DualSDDP.SimpleLBO(A, B, T, c, ds, sb[2], cb[2], 0, 1e5, 1e5, probs)
+        lbo = DualSDDP.SimpleLBO(A, B, T, c, ds, sb[2], cb[2], 0, problem_ub, α, probs)
         push!(lbos, lbo)
     end
 
