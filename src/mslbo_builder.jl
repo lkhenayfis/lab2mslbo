@@ -122,7 +122,7 @@ function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})::Tup
 
     states_bounds, control_bounds = split_bounds(x, bounds...)
 
-    return A, B, T, c, ds, states_bounds, control_bounds
+    return A, B, T, c, affine[3], states_bounds, control_bounds
 end
 
 # AUXILIARES ---------------------------------------------------------------------------------------
