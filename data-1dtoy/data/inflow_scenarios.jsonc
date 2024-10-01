@@ -12,24 +12,24 @@
                     // numbers of seasons
                     "season": 1,
                     // distribution name, should be one implemented by Distributions.jl
-                    "kind": "Normal",
+                    "kind": "LogNormal",
                     // parameter vector in the order defined by Distributions.jl
-                    "parameters": [40.0, 20.0]
+                    "parameters": [3.6, 0.48]
                 },
                 {
                     "season": 2,
-                    "kind": "Normal",
-                    "parameters": [40.0, 20.0]
+                    "kind": "LogNormal",
+                    "parameters": [3.6, 0.48]
                 },
                 {
                     "season": 3,
-                    "kind": "Normal",
-                    "parameters": [40.0, 20.0]
+                    "kind": "LogNormal",
+                    "parameters": [3.6, 0.48]
                 },
                 {
                     "season": 4,
-                    "kind": "Normal",
-                    "parameters": [40.0, 20.0]
+                    "kind": "LogNormal",
+                    "parameters": [3.6, 0.48]
                 }
             ]
         }
