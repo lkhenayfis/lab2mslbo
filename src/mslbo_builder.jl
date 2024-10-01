@@ -11,8 +11,8 @@ Build a `DualSDDP.MSLBO` object from a `SDDPlab` input data directory
   - `α::Vector{Float64}`: Upper bound on the Lipschitz constant at each stage
 """
 function build_mslbo(data_dir::String;
-    fun_problem_ub::Function = default_problem_ub,
-    fun_α::Function = default_α,
+    fun_problem_ub::Function = default_guess,
+    fun_α::Function = default_guess,
     seed::Integer = 1234)::DualSDDP.MSLBO
 
     files = read_lab_inputs(data_dir)
@@ -33,12 +33,21 @@ function build_mslbo(data_dir::String;
     return DualSDDP.build(lbos)
 end
 
-function default_problem_ub(files::Vector{SDDPlab.Inputs.InputModule})
-    return 1e5
-end
+function default_guess(files::Vector{SDDPlab.Inputs.InputModule})
+    algo = SDDPlab.Inputs.get_algorithm(files)
+    num_stages = SDDPlab.Inputs.get_number_of_stages(algo)
 
-function default_α(files::Vector{SDDPlab.Inputs.InputModule})
-    return 1e5
+    buses = SDDPlab.System.get_buses_entities(SDDPlab.Inputs.get_system(files))
+    scens = SDDPlab.Inputs.get_scenarios(files)
+
+    guess = 0.0
+    for stage in range(1, num_stages)
+        for bus in buses
+            guess += bus.deficit_cost * SDDPlab.Scenarios.get_load(bus.id, stage, scens)
+        end
+    end
+
+    return guess
 end
 
 function read_lab_inputs(data_dir::String)::Vector{SDDPlab.Inputs.InputModule}
