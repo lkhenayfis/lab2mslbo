@@ -27,6 +27,20 @@ function build_mslbo(data_dir::String, problem_ub::Float64, α::Float64;
     return DualSDDP.build(lbos)
 end
 
+function read_lab_inputs(data_dir::String)::Vector{SDDPlab.Inputs.InputModule}
+    original_wd = pwd()
+
+    cd(data_dir)
+
+    entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", CompositeException())
+    path = SDDPlab.Inputs.get_path(entrypoint)
+    files = SDDPlab.Inputs.get_files(entrypoint)
+
+    cd(original_wd)
+
+    return files
+end
+
 """
     build_sddp_model
 
@@ -42,17 +56,7 @@ A `Tuple` containing two elements: the first is an `SDDP.PolicyGraph` containing
 second is the Sample Average Aproximation built, i.e., noises for every stage, branch and random
 element (in that order) in a `Vector{Vector{Vector}}`
 """
-function build_sddp_model(data_dir::String)::Tuple
-    original_wd = pwd()
-
-    cd(data_dir)
-
-    entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", CompositeException())
-    path = SDDPlab.Inputs.get_path(entrypoint)
-    files = SDDPlab.Inputs.get_files(entrypoint)
-
-    cd(original_wd)
-
+function build_sddp_model(files::Vector{SDDPlab.Inputs.InputModule})::Tuple
     model = SDDPlab.Tasks.__build_model(files)
 
     scenarios = SDDPlab.Inputs.get_scenarios(files)
