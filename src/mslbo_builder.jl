@@ -412,13 +412,12 @@ function split_bounds(vars::Vector{VariableRef}, bound_mat::Matrix,
     lb::Vector{Float64}, ub::Vector{Float64})::Tuple
 
     state_t, state_t_1, control = get_state_control_indexes(vars)
-    states = vcat(state_t, state_t_1)
 
     sorted_lb = sort_by_selector_matrix(bound_mat, lb)
     sorted_ub = sort_by_selector_matrix(bound_mat, ub)
 
-    lb_states = vec(sorted_lb[states,:])
-    ub_states = vec(sorted_ub[states,:])
+    lb_states = vec(sorted_lb[state_t,:])
+    ub_states = vec(sorted_ub[state_t,:])
 
     lb_control = vec(sorted_lb[control,:])
     ub_control = vec(sorted_ub[control,:])
