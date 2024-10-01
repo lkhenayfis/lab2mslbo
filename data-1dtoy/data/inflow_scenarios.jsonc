@@ -1,0 +1,76 @@
+{
+    // defines the distributions of uncertainty for each system element
+    "marginal_models": [
+        {
+            "id": 1,
+            // array of distribution specifications
+            "distributions": [
+                {
+                    // 'season' should be an integer compatible with the type of stage 
+                    // defined in "stages.jsonc", i.e. if 'monthly' seasons vary in [1, 12]
+                    // TODO better documentation for the collateral effect of arbitrary 
+                    // numbers of seasons
+                    "season": 1,
+                    // distribution name, should be one implemented by Distributions.jl
+                    "kind": "Normal",
+                    // parameter vector in the order defined by Distributions.jl
+                    "parameters": [40.0, 20.0]
+                },
+                {
+                    "season": 2,
+                    "kind": "Normal",
+                    "parameters": [40.0, 20.0]
+                },
+                {
+                    "season": 3,
+                    "kind": "Normal",
+                    "parameters": [40.0, 20.0]
+                },
+                {
+                    "season": 4,
+                    "kind": "Normal",
+                    "parameters": [40.0, 20.0]
+                }
+            ]
+        }
+    ],
+
+    // defines the copulas used for multivariate simulation
+    // to achieve independent models one may use GaussianCopula with identity R matrix
+    "copulas": [
+        {
+            "season": 1,
+            // copula name, should be one implemented by Copulas.jl
+            "kind": "GaussianCopula",
+            // copula parameters, check the individual documentations for how each copula is
+            // parametrized
+            // In the case of matrix parameters, supply an array of arrays which will be 
+            // used to construct the matrix IN A ROW MAJOR FASHION, i.e. each sub-array
+            // will become an individual row
+            "parameters": [
+                [1.0]
+            ]
+        },
+        {
+            "season": 2,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [1.0]
+            ]
+        },
+        {
+            "season": 3,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [1.0]
+            ]
+        },
+        {
+            "season": 4,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [1.0]
+            ]
+        }
+    ]
+}

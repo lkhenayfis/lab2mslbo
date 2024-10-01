@@ -1,0 +1,42 @@
+{
+    "buses": {
+        // accepts an external list of entities,
+        // which is defined in a CSV file and
+        // might override the default values
+        // of the "default_values" field
+        "file": "buses.csv",
+        "default_values": {
+            "deficit_cost": 1000.0
+        }
+    },
+    "lines": {
+        // accepts an external list of entities,
+        // which is defined in a CSV file and
+        // might override the default values
+        // of the "default_values" field
+        "file": "lines.csv",
+        "default_values": {
+            "exchange_penalty": 0.0
+        }
+    },
+    "hydros": {
+        // accepts an external list of entities,
+        // which is defined in a CSV file and
+        // might override the default values
+        // of the "default_values" field
+        "file": "hydros.csv",
+        "default_values": {
+            "downstream_id": 0,
+            "productivity": 1.0,
+            "spillage_penalty": 0.01
+        }
+    },
+    "thermals": {
+        // accepts an external list of entities,
+        // which is defined in a CSV file and
+        // might override the default values
+        // of the "default_values" field
+        "file": "thermals.csv",
+        "default_values": {}
+    }
+}
