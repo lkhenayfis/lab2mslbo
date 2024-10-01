@@ -10,11 +10,17 @@ Build a `DualSDDP.MSLBO` object from a `SDDPlab` input data directory
   - `problem_ub::Vector{Float64}`: Upper bound on the value of the problem at each stage
   - `α::Vector{Float64}`: Upper bound on the Lipschitz constant at each stage
 """
-function build_mslbo(data_dir::String, problem_ub::Float64, α::Float64;
+function build_mslbo(data_dir::String;
+    fun_problem_ub::Function = default_problem_ub,
+    fun_α::Function = default_α,
     seed::Integer = 1234)::DualSDDP.MSLBO
 
+    files = read_lab_inputs(data_dir)
+    problem_ub = fun_problem_ub(files)
+    α = fun_α(files)
+
     Random.seed!(seed)
-    aux, saa = build_sddp_model(data_dir)
+    aux, saa = build_sddp_model(files)
     
     lbos = Vector{DualSDDP.SimpleLBO}()
     for i in 1:length(aux.nodes)
@@ -25,6 +31,14 @@ function build_mslbo(data_dir::String, problem_ub::Float64, α::Float64;
     end
 
     return DualSDDP.build(lbos)
+end
+
+function default_problem_ub(files::Vector{SDDPlab.Inputs.InputModule})
+    return 1e5
+end
+
+function default_α(files::Vector{SDDPlab.Inputs.InputModule})
+    return 1e5
 end
 
 function read_lab_inputs(data_dir::String)::Vector{SDDPlab.Inputs.InputModule}
