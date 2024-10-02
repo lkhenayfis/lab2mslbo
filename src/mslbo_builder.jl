@@ -119,6 +119,7 @@ function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})::Tup
     bounds = fix_unbounded(bounds...)
     
     A, B, T = split_constraint_matrices(x, affine[1])
+    c = reduce_cost(x, c)
 
     states_bounds, control_bounds = split_bounds(x, bounds...)
     fix_infinity_bounds!(control_bounds[2], 1e4)
@@ -363,6 +364,12 @@ function split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)
     T = tech_mat[:, control]
 
     return A, B, T
+end
+
+function reduce_cost(vars::Vector{VariableRef}, costs::Vector{Float64})
+    state_t, state_t_1, control = get_state_control_indexes(vars)
+    costs = costs[control]
+    return costs
 end
 
 """
