@@ -333,8 +333,8 @@ Return `Tuple` of three vectors: position of current state, last state and contr
 vector of variables extracted from the `JuMP.Model`
 """
 function get_state_control_indexes(vars::Vector{VariableRef})::Tuple
-    state_t = get_variable_index(vars, "_in")
-    state_t_1 = get_variable_index(vars, "_out")
+    state_t = get_variable_index(vars, "_out")
+    state_t_1 = get_variable_index(vars, "_in")
 
     control = Vector{Int}()
     for i in range(1, length(vars))
