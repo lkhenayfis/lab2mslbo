@@ -121,6 +121,7 @@ function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})::Tup
     A, B, T = split_constraint_matrices(x, affine[1])
 
     states_bounds, control_bounds = split_bounds(x, bounds...)
+    fix_infinity_bounds!(control_bounds[2], 1e4)
 
     return A, B, T, c, affine[3], states_bounds, control_bounds
 end
@@ -317,6 +318,12 @@ function fix_unbounded(bound_mat::Matrix, lb::Vector{Float64}, ub::Vector{Float6
     ub = vcat(ub, repeat([Inf], length(unbounded)))
 
     return bound_mat, lb, ub
+end
+
+function fix_infinity_bounds!(v::Vector{Float64}, sub::Float64)
+    for i in range(1, length(v))
+        v[i] = isinf(v[i]) ? sub : v[i]
+    end
 end
 
 """
