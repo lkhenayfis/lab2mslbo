@@ -5,7 +5,7 @@ import GLPK
 solver = GLPK.Optimizer
 
 include("src/lab2mslbo.jl")
-M = lab2mslbo.build_mslbo("data-1dtoy/", seed=2);
+M = lab2mslbo.build_mslbo("data-1dtoy/");
 
 state0 = [83.222]
 risk      = mk_primal_avar(.4)
