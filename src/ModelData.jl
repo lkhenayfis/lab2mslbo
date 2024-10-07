@@ -133,3 +133,19 @@ function find_delete_ω!(md::ModelData)
     md.A[:, ω_indices] .= 0
     remove_dummy_variables!(md)
 end
+
+# HELPERS ------------------------------------------------------------------------------------------
+
+"""
+    find_non_zero
+
+Return vector of bools pointing in which lines of `A` at least one column in `i` has non zero value
+"""
+function find_non_zero(i::Vector{Int}, A::Matrix)
+    has_nonzero = Vector{Bool}()
+    for row in eachrow(A)
+        push!(has_nonzero, sum(row[i] .!= 0) > 0)
+    end
+
+    return has_nonzero
+end
