@@ -111,7 +111,7 @@ function remove_dummy_variables!(md::ModelData)
         warn_dummies(dummy_variables)
         md.x = md.x[.!indexes]
         md.A = md.A[:, .!indexes]
-        md.costs = md.costs[.!indexes]
+        md.c = md.c[.!indexes]
         md.x_lower = md.x_lower[.!indexes]
         md.x_upper = md.x_upper[.!indexes]
     end

@@ -1,7 +1,7 @@
 
 mutable struct ModelData
     x::Vector{VariableRef}
-    costs::Vector{Float64}
+    c::Vector{Float64}
     A::Matrix{Float64}
     b_lower::Vector{Float64}
     b_upper::Vector{Float64}
