@@ -1,45 +1,12 @@
 
 """
-    fix_unbounded(bound_mat::Matrix, lb::Vector{Float64}, ub::Vector{Float64})
-
-Add upper bound at Infinity for any unbounded variables in the problem
-
-# Arguments
-
-All arguments are, in order, the first returned `Tuple` from `split_bounds_affine`
-
-  - `bound_mat::Matrix` section of technology matrix regarding box constraints
-  - `lb::Vector{Float64}` section of lower bounds regarding box constraints
-  - `ub::Vector{Float64}` section of upper bounds regarding box constraints
-
-# Return
-
-A `Tuple` of it's arguments, in the same order, after inclusion of new bounds
-"""
-function fix_unbounded(bound_mat::Matrix, lb::Vector{Float64}, ub::Vector{Float64})::Tuple
-    Nvars = size(bound_mat)[2]
-    unbounded = mapslices(x -> sum(x), bound_mat, dims=[1])[1,:]
-    unbounded = findall(unbounded .== 0.0)
-
-    for u in unbounded
-        newrow = [i == u ? 1 : 0 for i in 1:Nvars]
-        bound_mat = cat(bound_mat, newrow'; dims=1)
-    end
-
-    lb = vcat(lb, repeat([0], length(unbounded)))
-    ub = vcat(ub, repeat([Inf], length(unbounded)))
-
-    return bound_mat, lb, ub
-end
-
-"""
     fix_infinity_bounds!(v::Vector{Float64}, sub::Float64)
 
 Change `Inf` upper bounds to `sub`, as `DualSDDP` doesn't allow unbounded variables
 """
-function fix_infinity_bounds!(v::Vector{Float64}, sub::Float64)
-    for i in range(1, length(v))
-        v[i] = isinf(v[i]) ? sub : v[i]
+function fix_infinity_bounds!(md::ModelData, sub::Float64)
+    for i in range(1, length(md.x_upper))
+        md.x_upper[i] = isinf(md.x_upper[i]) ? sub : md.x_upper[i]
     end
 end
 
