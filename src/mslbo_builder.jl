@@ -243,27 +243,6 @@ function split_bounds_affine(tech_mat::Matrix, b_lower::Vector, b_upper::Vector,
     return ((A_bounds, l_bounds, u_bounds), (A_affine, l_affine, ds))
 end
 
-"""
-    split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)::Tuple
-
-Return `Tuple` of matrices `A`, `B` and `T` as specified in `DualSDDP`
-
-# Arguments
-
-  - `vars::Vector{VariableRef}` subproblem variables
-  - `tech_mat::Matrix` technology matrix OF THE AFFINE SECTION, as returned from
-    `split_bounds_affine`
-"""
-function split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)
-    state_t, state_t_1, control = get_state_control_indexes(vars)
-
-    A = tech_mat[:, state_t]
-    B = tech_mat[:, state_t_1]
-    T = tech_mat[:, control]
-
-    return A, B, T
-end
-
 function reduce_cost(vars::Vector{VariableRef}, costs::Vector{Float64})
     state_t, state_t_1, control = get_state_control_indexes(vars)
     costs = costs[control]

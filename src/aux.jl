@@ -17,24 +17,6 @@ function get_variable_index(v::Vector{VariableRef}, p::String)
 end
 
 """
-    get_state_control_indexes(vars::Vector{VariableRef})::Tuple
-
-Return `Tuple` of three vectors: position of current state, last state and control variables in the
-vector of variables extracted from the `JuMP.Model`
-"""
-function get_state_control_indexes(vars::Vector{VariableRef})::Tuple
-    state_t = get_variable_index(vars, "_out")
-    state_t_1 = get_variable_index(vars, "_in")
-
-    control = Vector{Int}()
-    for i in range(1, length(vars))
-        !((i in state_t) | (i in state_t_1)) ? push!(control, i) : nothing
-    end
-
-    return state_t, state_t_1, control
-end
-
-"""
     paste_vector
 
 Take a vector of strings and return a single string `"(v_1, v_2, ..., v_n)"`

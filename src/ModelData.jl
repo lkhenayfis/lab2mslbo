@@ -62,3 +62,51 @@ function split_elements(m::JuMP.Model)::Tuple
 
     return variables, costs, A, b_lower, b_upper, x_lower, x_upper
 end
+
+# METHODS ------------------------------------------------------------------------------------------
+
+"""
+    get_state_control_indexes(md::ModelData)::Tuple
+
+Return `Tuple` of three vectors: position of current state, last state and control variables in the
+vector of variables extracted from the `JuMP.Model`
+"""
+function get_state_control_indexes(md::ModelData)::Tuple
+    state_t = get_variable_index(md.x, "_out")
+    state_t_1 = get_variable_index(md.x, "_in")
+
+    control = Vector{Int}()
+    for i in range(1, length(md.x))
+        !((i in state_t) | (i in state_t_1)) ? push!(control, i) : nothing
+    end
+
+    return state_t, state_t_1, control
+end
+
+"""
+    split_constraint_matrices(md::ModelData)::Tuple
+
+Return `Tuple` of matrices `A`, `B` and `T` as specified in `DualSDDP`
+
+# Arguments
+
+  - `vars::Vector{VariableRef}` subproblem variables
+  - `tech_mat::Matrix` technology matrix OF THE AFFINE SECTION, as returned from
+    `split_bounds_affine`
+"""
+function split_constraint_matrices(md::ModelData)
+    state_t, state_t_1, control = get_state_control_indexes(md)
+
+    A = md.A[:, state_t]
+    B = md.A[:, state_t_1]
+    T = md.A[:, control]
+
+    return A, B, T
+end
+
+function get_equality_inequality_indexes(md::ModelData)::Tuple
+    equality = findall(md.b_lower .== md.b_upper)
+    inequality = findall(md.b_lower .!= md.b_upper)
+
+    return equality, inequality
+end
