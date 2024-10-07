@@ -7,11 +7,12 @@ mutable struct ModelData
     b_upper::Vector{Float64}
     x_lower::Vector{Float64}
     x_upper::Vector{Float64}
+    sp_constraints::Vector{Bool}
 end
 
 function ModelData(m::JuMP.Model)
     split = split_elements(m)
-    ModelData(split...)
+    ModelData(split..., [0])
 end
 
 # HELPERS ------------------------------------------------------------------------------------------
@@ -109,4 +110,26 @@ function get_equality_inequality_indexes(md::ModelData)::Tuple
     inequality = findall(md.b_lower .!= md.b_upper)
 
     return equality, inequality
+end
+
+function force_inequalities_to_geq!(md::ModelData)
+    _, ind = get_equality_inequality_indexes(md)
+
+    not_leq_constraint = .!isinf.(md.b_upper[ind])
+    ind = ind[not_leq_constraint]
+
+    if any(ind)
+        for i in ind
+            md.A[i,:] .*= -1
+            md.b_lower[ind] = .-md.b_upper
+            md.b_lower[ind] = -Inf
+        end
+    end
+end
+
+function find_delete_ω!(md::ModelData)
+    ω_indices = get_variable_index(md.x, "ω_")
+    md.sp_constraints = find_non_zero(ω_indices, md.A)
+    md.A[:, ω_indices] .= 0
+    remove_dummy_variables!(md)
 end
