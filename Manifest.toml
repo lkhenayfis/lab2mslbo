@@ -1218,7 +1218,7 @@ version = "1.8.1"
 
 [[deps.SDDPlab]]
 deps = ["CSV", "Copulas", "DataFrames", "Dates", "Distributions", "GLPK", "Graphs", "JSON", "JuMP", "JuliaFormatter", "LinearAlgebra", "Logging", "PackageCompiler", "Plots", "Random", "SDDP", "Statistics", "StatsPlots", "Suppressor", "Tables"]
-git-tree-sha1 = "1d06b6fa6e322ab140dc7b993ee41cedbfb8ad7b"
+git-tree-sha1 = "32448b44a670e389d8ae82fb733246536e016c43"
 repo-rev = "io-refactor"
 repo-url = "git@github.com:rjmalves/sddp-lab.git"
 uuid = "5c1c4b2a-157d-4661-af07-65cbafd6173d"
