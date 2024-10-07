@@ -110,8 +110,10 @@ bounds and tuple of controls' lower and upper bounds, all vectors
 """
 function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})::Tuple
 
-    x, full_A, c, lb, ub = split_elements(m)
-    x, full_A, c, lb, ub = sanitize_variables(x, full_A, c, lb, ub)
+    x, full_A, c, lb, ub, lx, ux = split_elements(m)
+
+    x, full_A, c = remove_dummy_variables(x, full_A, c)
+    #x, full_A, c, lb, ub = sanitize_variables(x, full_A, c, lb, ub)
 
     x, full_A, c, ds, sp_c = fix_ω(x, full_A, c, ub, node_noises)
 
@@ -128,51 +130,6 @@ function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})::Tup
 end
 
 # AUXILIARES ---------------------------------------------------------------------------------------
-
-"""
-    get_costs(m::JuMP.Model, vars::Vector{VariableRef})::Vector
-
-Extract vector of costs from a `JuMP.Model` built for a `SDDP.PolicyGraph`
-"""
-function get_costs(m::JuMP.Model, vars::Vector{VariableRef})::Vector
-    terms = m.ext[:sddp_node].stage_objective.terms
-    costs = zeros(Float64, size(vars))
-    for (v, coef) in terms
-        index = findfirst(==(v), vars)
-        costs[index] = coef
-    end
-
-    return costs
-end
-
-"""
-    split_elements(m::JuMP.Model)::Tuple
-
-Split a `JuMP.Model` into it's composing elements: costs, constraints matrix and bounds
-
-# Arguments
-
-  - `m::JuMP.Model` model built for a `SDDP.PolicyGraph`, as returned in nodes of `build_sddp_model`
-
-# Returns
-
-A `Tuple` containing, in order: vector of subproblem variables (`Vector{VariableRef}`), technology
-matrix, vector of costs, vector of lower and upper bounds on the constraints, as in
-described in `JuMP.lp_matrix_data`
-"""
-function split_elements(m::JuMP.Model)::Tuple
-    
-    md = lp_matrix_data(m)
-
-    # always removes epigraphical variable added last by SDDP.jl
-    variables = md.variables[1:end-1]
-    costs = get_costs(m, variables)
-    A = Matrix(md.A)[:, 1:end-1]
-    b_lower = md.b_lower
-    b_upper = md.b_upper
-
-    return variables, A, costs, b_lower, b_upper
-end
 
 """
     sanitize_variables(vars, tech_mat, costs, b_lower, b_upper)
