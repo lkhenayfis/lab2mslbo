@@ -110,10 +110,8 @@ bounds and tuple of controls' lower and upper bounds, all vectors
 """
 function jump2matrices(m::JuMP.Model, node_noises::Vector{Vector{Float64}})::Tuple
 
-    x, full_A, c, lb, ub, lx, ux = split_elements(m)
-
-    x, full_A, c = remove_dummy_variables(x, full_A, c)
-    #x, full_A, c, lb, ub = sanitize_variables(x, full_A, c, lb, ub)
+    md = ModelData(m)
+    remove_dummy_variables!(md)
 
     x, full_A, c, ds, sp_c = fix_ω(x, full_A, c, ub, node_noises)
 

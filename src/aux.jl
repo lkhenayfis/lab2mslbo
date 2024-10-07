@@ -102,19 +102,19 @@ end
 
 Find dummy variables (not used in any constraint) and remove them from the system matrices
 """
-function remove_dummy_variables(vars::Vector{VariableRef}, tech_mat::Matrix, costs::Vector)
+function remove_dummy_variables!(md::ModelData)
 
-    indexes = find_dummies(tech_mat)
-    dummy_variables = vars[indexes]
+    indexes = find_dummies(md.A)
+    dummy_variables = md.x[indexes]
 
     if length(indexes) >= 1
         warn_dummies(dummy_variables)
-        vars = vars[.!indexes]
-        tech_mat = tech_mat[:, .!indexes]
-        costs = costs[.!indexes]
+        md.x = md.x[.!indexes]
+        md.A = md.A[:, .!indexes]
+        md.costs = md.costs[.!indexes]
+        md.x_lower = md.x_lower[.!indexes]
+        md.x_upper = md.x_upper[.!indexes]
     end
-
-    return vars, tech_mat, costs
 end
 
 """
