@@ -33,50 +33,6 @@ function paste_vector(v::Vector{String})
     return pasted
 end
 
-# SANITAZING VARIABLE BY NAME ----------------------------------------------------------------------
-
-"""
-    remove_variable_by_name
-
-Find slack variables and remove them from the system matrices
-"""
-function remove_variable_by_name(vars::Vector{VariableRef}, pattern::String,
-    tech_mat::Matrix, b_lower::Vector, b_upper::Vector)
-
-    indexes = get_variable_index(vars, pattern)
-    slack_variables = vars[indexes]
-
-    if length(indexes) >= 1
-        warn_slacks(slack_variables)
-        bool_drop = .!find_non_zero(indexes, tech_mat)
-        tech_mat = tech_mat[bool_drop, :]
-        b_lower = b_lower[bool_drop]
-        b_upper = b_upper[bool_drop]
-    end
-
-    return tech_mat, b_lower, b_upper
-end
-
-"""
-    find_non_zero
-
-Return vector of bools pointing in which lines of `A` at least one column in `i` has non zero value
-"""
-function find_non_zero(i::Vector{Int}, A::Matrix)
-    has_nonzero = Vector{Bool}()
-    for row in eachrow(A)
-        push!(has_nonzero, sum(row[i] .!= 0) > 0)
-    end
-
-    return has_nonzero
-end
-
-function warn_slacks(sv::Union{VariableRef,Vector{VariableRef}})
-    warn_msg = "Found the following slack variables: " * paste_vector(string.(sv))
-    warn_msg *= "\n these and their associated constraints will be removed -- revise the inputs"
-    @warn warn_msg
-end
-
 # SANITIZING DUMMY VARIABLES -----------------------------------------------------------------------
 
 """
@@ -117,26 +73,6 @@ function warn_dummies(dv::Union{VariableRef,Vector{VariableRef}})
     warn_msg = "Found the following dummy variables: " * paste_vector(string.(dv))
     warn_msg *= "\n these and their associated constraints will be removed -- revise the inputs"
     @warn warn_msg
-end
-
-# NOISES -------------------------------------------------------------------------------------------
-
-function fix_ω(vars, tech_mat, costs, b_upper, node_noises)
-    # zeroes out any coefficients in tech_mat related to noise terms
-    ω_indices = get_variable_index(vars, "ω_")
-    sp_constraints = find_non_zero(ω_indices, tech_mat)
-    tech_mat[:, ω_indices] .= 0
-
-    # rodar um remove_dummy_variables para limpar os ω_X
-    vars, tech_mat, costs = remove_dummy_variables(vars, tech_mat, costs)
-
-    B = length(node_noises)
-    ds = [copy(b_upper) for i in range(1, B)]
-    for (i, d) in enumerate(ds)
-        d[sp_constraints] .= node_noises[i]
-    end
-
-    return vars, tech_mat, costs, ds, sp_constraints
 end
 
 # LOWER/UPPER --------------------------------------------------------------------------------------
