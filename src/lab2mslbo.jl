@@ -5,7 +5,8 @@ using SDDPlab
 using DualSDDP
 using SDDP, JuMP
 
-include("helpers.jl")
+include("aux.jl")
+include("bounds.jl")
 include("mslbo_builder.jl")
 
 export build_mslbo
