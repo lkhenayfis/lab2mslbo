@@ -24,9 +24,20 @@ function build_mslbo(data_dir::String;
     
     lbos = Vector{DualSDDP.SimpleLBO}()
     for i in 1:length(aux.nodes)
-        A, B, T, c, ds, sb, cb = jump2matrices(aux.nodes[i].subproblem, saa[i])
-        probs = repeat([1], length(ds)) ./ length(ds)
-        lbo = DualSDDP.SimpleLBO(A, B, T, c, ds, sb[2], cb[2], 0, problem_ub, α, probs)
+        slbod = SimpleLBOData(aux.nodes[i].subproblem, saa[i], 0.0, problem_ub, α)
+        lbo = DualSDDP.SimpleLBO(
+            slbod.A_eq,
+            slbod.B_eq,
+            slbod.T_eq,
+            slbod.c,
+            slbod.d_eq,
+            slbod.Ux,
+            slbod.Uy,
+            slbod.lb,
+            slbod.ub,
+            slbod.α,
+            slbod.prob
+        )
         push!(lbos, lbo)
     end
 
