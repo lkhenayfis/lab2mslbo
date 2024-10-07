@@ -18,3 +18,18 @@ mutable struct SimpleLBOData
 
     SimpleLBOData() = new()
 end
+
+function SimpleLBOData(m::JuMP.Model, node_noises::Vector)
+
+    slbod = SimpleLBOData()
+
+    md = ModelData(m)
+    remove_dummy_variables!(md)
+    fix_infinity_bounds!(md)
+
+    # preencher custos
+        # fill_costs!(slbod, md)
+    # preencher matrizes A B T de igualdade e desigualdade
+    # preencher bounds de estados e controle
+
+end
