@@ -289,24 +289,6 @@ function split_bounds_affine(tech_mat::Matrix, b_lower::Vector, b_upper::Vector,
 end
 
 """
-    get_state_control_indexes(vars::Vector{VariableRef})::Tuple
-
-Return `Tuple` of three vectors: position of current state, last state and control variables in the
-vector of variables extracted from the `JuMP.Model`
-"""
-function get_state_control_indexes(vars::Vector{VariableRef})::Tuple
-    state_t = get_variable_index(vars, "_out")
-    state_t_1 = get_variable_index(vars, "_in")
-
-    control = Vector{Int}()
-    for i in range(1, length(vars))
-        !((i in state_t) | (i in state_t_1)) ? push!(control, i) : nothing
-    end
-
-    return state_t, state_t_1, control
-end
-
-"""
     split_constraint_matrices(vars::Vector{VariableRef}, tech_mat::Matrix)::Tuple
 
 Return `Tuple` of matrices `A`, `B` and `T` as specified in `DualSDDP`
