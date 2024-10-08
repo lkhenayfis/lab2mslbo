@@ -67,12 +67,12 @@ end
 # METHODS ------------------------------------------------------------------------------------------
 
 """
-    get_state_control_indexes(md::ModelData)::Tuple
+    get_state_control_indexes(md::ModelData)::Tuple{Vector,Vector,Vector}
 
 Return `Tuple` of three vectors: position of current state, last state and control variables in the
 vector of variables extracted from the `JuMP.Model`
 """
-function get_state_control_indexes(md::ModelData)::Tuple
+function get_state_control_indexes(md::ModelData)::Tuple{Vector,Vector,Vector}
     state_t = get_variable_index(md.x, "_out")
     state_t_1 = get_variable_index(md.x, "_in")
 
@@ -85,17 +85,11 @@ function get_state_control_indexes(md::ModelData)::Tuple
 end
 
 """
-    split_constraint_matrices(md::ModelData)::Tuple
+    split_constraint_matrices(md::ModelData)::Tuple{Matrix,Matrix,Matrix}
 
 Return `Tuple` of matrices `A`, `B` and `T` as specified in `DualSDDP`
-
-# Arguments
-
-  - `vars::Vector{VariableRef}` subproblem variables
-  - `tech_mat::Matrix` technology matrix OF THE AFFINE SECTION, as returned from
-    `split_bounds_affine`
 """
-function split_constraint_matrices(md::ModelData)
+function split_constraint_matrices(md::ModelData)::Tuple{Matrix,Matrix,Matrix}
     state_t, state_t_1, control = get_state_control_indexes(md)
 
     A = md.A[:, state_t]
@@ -105,13 +99,24 @@ function split_constraint_matrices(md::ModelData)
     return A, B, T
 end
 
-function get_equality_inequality_indexes(md::ModelData)::Tuple
+"""
+    get_equality_inequality_indexes(md::ModelData)::Tuple
+
+Return `Tuple` of two vectors: rows corresponding to equality and to inequality constraints,
+respectively
+"""
+function get_equality_inequality_indexes(md::ModelData)::Tuple{Vector,Vector}
     equality = findall(md.b_lower .== md.b_upper)
     inequality = findall(md.b_lower .!= md.b_upper)
 
     return equality, inequality
 end
 
+"""
+    force_inequalities_to_geq!(md::ModelData)
+
+Mofify inequality constraints in a `ModelData` to be of >= type
+"""
 function force_inequalities_to_geq!(md::ModelData)
     _, ind = get_equality_inequality_indexes(md)
 
@@ -127,6 +132,13 @@ function force_inequalities_to_geq!(md::ModelData)
     end
 end
 
+
+"""
+    find_delete_ω!(md::ModelData)
+
+Delete all noise variables in a `ModelData` and fill the `sp_constraints` field, indicating which
+constraints corresponded to stochastic processes
+"""
 function find_delete_ω!(md::ModelData)
     ω_indices = get_variable_index(md.x, "ω_")
     md.sp_constraints = find_non_zero(ω_indices, md.A)
@@ -141,7 +153,7 @@ end
 
 Return vector of bools pointing in which lines of `A` at least one column in `i` has non zero value
 """
-function find_non_zero(i::Vector{Int}, A::Matrix)
+function find_non_zero(i::Vector{Int}, A::Matrix)::Vector{Bool}
     has_nonzero = Vector{Bool}()
     for row in eachrow(A)
         push!(has_nonzero, sum(row[i] .!= 0) > 0)
