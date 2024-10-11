@@ -7,10 +7,10 @@ solver = GLPK.Optimizer
 include("src/lab2mslbo.jl")
 M = lab2mslbo.build_mslbo("data-1dtoy/");
 
+ub_step = 10
 state0 = [83.222]
-risk      = mk_primal_avar(.4)
-risk_dual = mk_copersp_avar(.4)
-
+risk = mk_primal_avar(0.4)
+risk_dual = mk_copersp_avar(0.4)
 
 # Need M::MSLBO, nstages::Int, risk, risk_dual, state0::Vector{Float64},
 #      niters::Int, solver
