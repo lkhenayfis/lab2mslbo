@@ -24,7 +24,7 @@ seed!(1)
 dual_pb, dual_ubs, dual_times = dualsolve(M, 4, risk_dual, solver, state0, 40; verbose=true)
 
 # Recursive upper bounds over primal trajectories
-rec_ubs, rec_times = primalub(M, 4, risk, solver, primal_trajs, ub_step:ub_step:40; verbose=true)
+rec_ubs, rec_times = primalub(M, 4, risk, solver, primal_trajs, 10:10:40; verbose=true)
 
 # Primal with outer and inner bounds
 seed!(1)
