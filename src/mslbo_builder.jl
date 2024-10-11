@@ -13,7 +13,7 @@ Build a `DualSDDP.MSLBO` object from a `SDDPlab` input data directory
 function build_mslbo(data_dir::String;
     fun_problem_ub::Function = default_guess,
     fun_α::Function = default_guess,
-    seed::Integer = 1234)::DualSDDP.MSLBO
+    seed::Integer = 1234)::Tuple{DualSDDP.MSLBO, Vector{Float64}}
 
     files = read_lab_inputs(data_dir)
     problem_ub = fun_problem_ub(files)
@@ -21,6 +21,7 @@ function build_mslbo(data_dir::String;
 
     Random.seed!(seed)
     aux, saa = build_sddp_model(files)
+    initial_states = get_initial_states(files)
     
     lbos = Vector{DualSDDP.SimpleLBO}()
     for i in 1:length(aux.nodes)
@@ -41,7 +42,7 @@ function build_mslbo(data_dir::String;
         push!(lbos, lbo)
     end
 
-    return DualSDDP.build(lbos)
+    return DualSDDP.build(lbos), initial_states
 end
 
 function default_guess(files::Vector{SDDPlab.Inputs.InputModule})
@@ -73,6 +74,13 @@ function read_lab_inputs(data_dir::String)::Vector{SDDPlab.Inputs.InputModule}
     cd(original_wd)
 
     return files
+end
+
+function get_initial_states(files::Vector{SDDPlab.Inputs.InputModule})
+    hydros = SDDPlab.System.get_hydros_entities(SDDPlab.Inputs.get_system(files))
+    initial_states = [h.initial_storage for h in hydros]
+
+    return initial_states
 end
 
 """
