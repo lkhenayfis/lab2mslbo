@@ -6,6 +6,7 @@ using DualSDDP
 using SDDP, JuMP
 
 include("ModelData.jl")
+include("LabData.jl")
 include("SimpleLBOData.jl")
 include("aux.jl")
 include("bounds.jl")

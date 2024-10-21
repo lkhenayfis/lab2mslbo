@@ -11,9 +11,9 @@ Build a `DualSDDP.MSLBO` object from a `SDDPlab` input data directory
   - `α::Vector{Float64}`: Upper bound on the Lipschitz constant at each stage
 """
 function build_mslbo(data_dir::String;
-    fun_problem_ub::Function = default_guess,
-    fun_α::Function = default_guess,
-    seed::Integer = 1234)::Tuple{DualSDDP.MSLBO, Vector{Float64}}
+    fun_problem_ub::Function=default_guess,
+    fun_α::Function=default_guess,
+    seed::Integer=1234)::Tuple{DualSDDP.MSLBO,LabData}
 
     files = read_lab_inputs(data_dir)
     problem_ub = fun_problem_ub(files)
@@ -22,7 +22,7 @@ function build_mslbo(data_dir::String;
     Random.seed!(seed)
     aux, saa = build_sddp_model(files)
     initial_states = get_initial_states(files)
-    
+
     lbos = Vector{DualSDDP.SimpleLBO}()
     for i in 1:length(aux.nodes)
         slbod = SimpleLBOData(aux.nodes[i].subproblem, saa[i], 0.0, problem_ub, α)
@@ -42,7 +42,12 @@ function build_mslbo(data_dir::String;
         push!(lbos, lbo)
     end
 
-    return DualSDDP.build(lbos), initial_states
+    num_stages = get_num_stages(files)
+    risk_parameters = get_risk_measure_parameters(files)
+    num_iterations = get_num_iterations(files)
+    data = LabData(initial_states, num_stages, num_iterations, risk_parameters[1], risk_parameters[2])
+
+    return DualSDDP.build(lbos), data
 end
 
 function default_guess(files::Vector{SDDPlab.Inputs.InputModule})
@@ -83,6 +88,27 @@ function get_initial_states(files::Vector{SDDPlab.Inputs.InputModule})
     return initial_states
 end
 
+function get_num_stages(files::Vector{SDDPlab.Inputs.InputModule})
+    return SDDPlab.Inputs.get_number_of_stages(SDDPlab.Inputs.get_algorithm(files))
+end
+
+function get_num_iterations(files::Vector{SDDPlab.Inputs.InputModule})
+    return SDDPlab.get_tasks(files)[2].convergence.max_iterations
+end
+
+function get_risk_measure_parameters(files::Vector{SDDPlab.Inputs.InputModule})
+    risk_obj = SDDPlab.get_tasks(files)[2].risk_measure
+    if nameof(typeof(risk_obj)) == :Expectation
+        params = [1.0, 1.0]
+    elseif nameof(typeof(risk_obj)) == :AVaR
+        params = [risk_obj.alpha, 1.0]
+    elseif nameof(typeof(risk_obj)) == :CVaR
+        params = [risk_obj.alpha, 1.0 - risk_obj.lambda]
+    end
+    return params
+end
+
+
 """
     build_sddp_model
 
@@ -102,7 +128,7 @@ function build_sddp_model(files::Vector{SDDPlab.Inputs.InputModule})::Tuple
     model = SDDPlab.Tasks.__build_model(files)
 
     scenarios = SDDPlab.Inputs.get_scenarios(files)
-    num_stages = SDDPlab.Inputs.get_number_of_stages(SDDPlab.Inputs.get_algorithm(files))
+    num_stages = get_num_stages(files)
 
     SAA = SDDPlab.Scenarios.generate_saa(scenarios, num_stages)
 
