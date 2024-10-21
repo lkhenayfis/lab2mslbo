@@ -5,7 +5,11 @@
       "params": {
         "results": {
           "path": "out/echo",
-          "save": false
+          "save": false,
+          "format": {
+            "kind": "AnyFormat",
+            "params": {}
+          }
         }
       }
     },
@@ -15,44 +19,38 @@
         "convergence": {
           // Min/Max number of iterations
           "min_iterations": 10,
-          "max_iterations": 40,
+          "max_iterations": 256,
           // Early stopping criteria and params
           "stopping_criteria": {
             // IterationLimit | TimeLimit | LowerBoundStability | Statistical | ...
             "kind": "IterationLimit",
             "params": {
-              "num_iterations": 40
+              "num_iterations": 256
             }
-            // "kind": "LowerBoundStability",
-            // "params": {
-            //     // Threshold for the early
-            //     // stopping in % of zinf delta
-            //     // per iteration
-            //     "threshold": 0.1,
-            //     "num_iterations": 6
-            // }
           }
         },
         "risk_measure": {
           // Expectation | WorstCase | AVaR | CVaR | ...
-          "kind": "Expectation",
+          "kind": "CVaR",
           // each risk measure might need different params,
           // such as the confidence level for AVaR, etc.
+          "params": {
+            "alpha": 0.2,
+            "lambda": 0.9
+          }
+        },
+        "parallel_scheme": {
+          "kind": "Serial",
           "params": {}
         },
-        // "risk_measure": {
-        //     // Expectation | WorstCase | AVaR | CVaR | ...
-        //     "kind": "CVaR",
-        //     // each risk measure might need different params,
-        //     // such as the confidence level for AVaR, etc.
-        //     "params": {
-        //         "alpha": 0.5,
-        //         "lambda": 0.5
-        //     }
-        // },
         "results": {
           "path": "out/policy",
-          "save": true
+
+          "save": true,
+          "format": {
+            "kind": "ParquetFormat",
+            "params": {}
+          }
         }
       }
     },
@@ -61,9 +59,17 @@
       "params": {
         "num_simulated_series": 500,
         "policy_path": "out/policy",
+        "parallel_scheme": {
+          "kind": "Serial",
+          "params": {}
+        },
         "results": {
           "path": "out/simulation",
-          "save": true
+          "save": true,
+          "format": {
+            "kind": "ParquetFormat",
+            "params": {}
+          }
         }
       }
     }
