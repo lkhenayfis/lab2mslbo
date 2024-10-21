@@ -42,10 +42,11 @@ function build_mslbo(data_dir::String;
         push!(lbos, lbo)
     end
 
+    seed = get_seed(files)
     num_stages = get_num_stages(files)
     risk_parameters = get_risk_measure_parameters(files)
     num_iterations = get_num_iterations(files)
-    data = LabData(initial_states, num_stages, num_iterations, risk_parameters[1], risk_parameters[2])
+    data = LabData(initial_states, seed, num_stages, num_iterations, risk_parameters[1], risk_parameters[2])
 
     return DualSDDP.build(lbos), data
 end
@@ -72,7 +73,15 @@ function read_lab_inputs(data_dir::String)::Vector{SDDPlab.Inputs.InputModule}
 
     cd(data_dir)
 
-    entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", CompositeException())
+    e = CompositeException()
+    entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", e)
+
+    if length(e) > 0
+        for exc in e
+            println(exc)
+        end
+    end
+
     path = SDDPlab.Inputs.get_path(entrypoint)
     files = SDDPlab.Inputs.get_files(entrypoint)
 
@@ -86,6 +95,11 @@ function get_initial_states(files::Vector{SDDPlab.Inputs.InputModule})
     initial_states = [h.initial_storage for h in hydros]
 
     return initial_states
+end
+
+
+function get_seed(files::Vector{SDDPlab.Inputs.InputModule})
+    return SDDPlab.Inputs.get_scenarios(files).seed
 end
 
 function get_num_stages(files::Vector{SDDPlab.Inputs.InputModule})
