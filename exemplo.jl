@@ -15,7 +15,7 @@ nstages = data.num_stages
 niters = data.num_iterations
 ub_iters = Int64.(2 .^ (0:1:floor(log2(niters))))
 
-# O que fazer com os seeds?
+
 # Need solver
 
 # Solution algorithms
@@ -35,3 +35,9 @@ rec_ubs, rec_times = primalub(M, nstages, risk, solver, primal_trajs, ub_iters; 
 seed!(seed)
 io_pb, io_lbs, io_ubs, io_times = problem_child_solve(M, nstages, risk, solver, state0, niters; verbose=true);
 
+
+# Convergence columns
+# iteration | lower_bound | simulation | upper_bound | time
+# =
+# 1:niters  | primal_lbs  |     ?      |  rec_ubs    |  primal_times + rec_times
+# ?
