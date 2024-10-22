@@ -12,10 +12,10 @@ Build a `DualSDDP.MSLBO` object from a `SDDPlab` input data directory
 """
 function build_mslbo(data_dir::String;
     fun_problem_ub::Function=default_guess,
-    fun_α::Function=default_guess,
-    seed::Integer=1234)::Tuple{DualSDDP.MSLBO,LabData}
+    fun_α::Function=default_guess)::Tuple{DualSDDP.MSLBO,LabData}
 
     files = read_lab_inputs(data_dir)
+    seed = get_seed(files)
     problem_ub = fun_problem_ub(files)
     α = fun_α(files)
 
@@ -42,7 +42,6 @@ function build_mslbo(data_dir::String;
         push!(lbos, lbo)
     end
 
-    seed = get_seed(files)
     num_stages = get_num_stages(files)
     risk_parameters = get_risk_measure_parameters(files)
     num_iterations = get_num_iterations(files)
