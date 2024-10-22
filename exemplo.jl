@@ -1,12 +1,14 @@
 using DualSDDP
 using Random: seed!
-import GLPK
+using lab2mslbo: lab2mslbo
+using DataFrames
 
-solver = GLPK.Optimizer
 
-include("src/lab2mslbo.jl")
-M, data = lab2mslbo.build_mslbo("data-1dtoy/");
+deck_dir = "./data-1dtoy/"
 
+M, data, solver, writer, extension = lab2mslbo.build_mslbo(deck_dir);
+
+output_path = data.output_path
 state0 = data.state0
 seed = data.seed
 risk = mk_primal_avar(data.risk_alpha; beta=data.risk_lambda)
@@ -36,8 +38,37 @@ seed!(seed)
 io_pb, io_lbs, io_ubs, io_times = problem_child_solve(M, nstages, risk, solver, state0, niters; verbose=true);
 
 
-# Convergence columns
+# Convergence columns - sddp-lab
 # iteration | lower_bound | simulation | upper_bound | time
-# =
-# 1:niters  | primal_lbs  |     ?      |  rec_ubs    |  primal_times + rec_times
-# ?
+
+# Philpott
+# iteration | primal_lbs  |            |   rec_ubs   | primal_times | rec_times | time
+
+dense_ubs = fill(NaN, niters)
+for ub_pair in rec_ubs
+    dense_ubs[ub_pair[1]] = ub_pair[2]
+end
+dense_rec_times = fill(NaN, niters)
+for (ub_pair, time) in zip(rec_ubs, rec_times)
+    dense_rec_times[ub_pair[1]] = time
+end
+
+philpott_df = DataFrame(iteration=1:niters,
+    lower_bound=primal_lbs,
+    simulation=fill(NaN, niters),
+    upper_bound=dense_ubs,
+    primal_time=primal_times,
+    upper_bound_time=dense_rec_times,
+    time=primal_times + dense_rec_times)
+
+
+output_dir_path = deck_dir * output_path
+mkpath(output_dir_path)
+writer(output_dir_path * "/convergence" * extension, philpott_df)
+
+# DualSDDP
+# iteration | primal_lbs  |            |   dual_ubs  | primal_times | dual_times | time
+
+# Reagan (Baucke)
+# iteration | io_lbs      |            |   io_ubs    |   io_times   | time
+

@@ -12,7 +12,7 @@ Build a `DualSDDP.MSLBO` object from a `SDDPlab` input data directory
 """
 function build_mslbo(data_dir::String;
     fun_problem_ub::Function=default_guess,
-    fun_α::Function=default_guess)::Tuple{DualSDDP.MSLBO,LabData}
+    fun_α::Function=default_guess)::Tuple{DualSDDP.MSLBO,LabData,Any,Function,String}
 
     files = read_lab_inputs(data_dir)
     seed = get_seed(files)
@@ -45,9 +45,10 @@ function build_mslbo(data_dir::String;
     num_stages = get_num_stages(files)
     risk_parameters = get_risk_measure_parameters(files)
     num_iterations = get_num_iterations(files)
-    data = LabData(initial_states, seed, num_stages, num_iterations, risk_parameters[1], risk_parameters[2])
+    output_path = get_output_path(files)
+    data = LabData(initial_states, seed, num_stages, num_iterations, output_path, risk_parameters[1], risk_parameters[2])
 
-    return DualSDDP.build(lbos), data
+    return DualSDDP.build(lbos), data, get_solver(files), get_writer(files), get_extension(files)
 end
 
 function default_guess(files::Vector{SDDPlab.Inputs.InputModule})
@@ -105,9 +106,29 @@ function get_num_stages(files::Vector{SDDPlab.Inputs.InputModule})
     return SDDPlab.Inputs.get_number_of_stages(SDDPlab.Inputs.get_algorithm(files))
 end
 
+function get_solver(files::Vector{SDDPlab.Inputs.InputModule})
+    resources = SDDPlab.Inputs.get_resources(files)
+    return SDDPlab.Inputs.generate_optimizer(resources.solver)
+end
+
 function get_num_iterations(files::Vector{SDDPlab.Inputs.InputModule})
     return SDDPlab.get_tasks(files)[2].convergence.max_iterations
 end
+
+function get_writer(files::Vector{SDDPlab.Inputs.InputModule})::Function
+    result_format = SDDPlab.get_tasks(files)[2].results.format
+    return SDDPlab.get_writer(result_format)
+end
+
+function get_extension(files::Vector{SDDPlab.Inputs.InputModule})::String
+    result_format = SDDPlab.get_tasks(files)[2].results.format
+    return SDDPlab.get_extension(result_format)
+end
+
+function get_output_path(files::Vector{SDDPlab.Inputs.InputModule})::String
+    return SDDPlab.get_tasks(files)[2].results.path
+end
+
 
 function get_risk_measure_parameters(files::Vector{SDDPlab.Inputs.InputModule})
     risk_obj = SDDPlab.get_tasks(files)[2].risk_measure
