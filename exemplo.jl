@@ -1,10 +1,16 @@
 using DualSDDP
+using SDDPlab: SDDPlab
 using Random: seed!
 using lab2mslbo: lab2mslbo
 using DataFrames
 
 
 deck_dir = "./data-1dtoy/"
+
+curdir = pwd()
+cd(deck_dir)
+SDDPlab.main()
+cd(curdir)
 
 M, data, solver, writer, extension = lab2mslbo.build_mslbo(deck_dir);
 
@@ -17,8 +23,6 @@ nstages = data.num_stages
 niters = data.num_iterations
 ub_iters = Int64.(2 .^ (0:1:floor(log2(niters))))
 
-
-# Need solver
 
 # Solution algorithms
 
@@ -59,16 +63,39 @@ philpott_df = DataFrame(iteration=1:niters,
     upper_bound=dense_ubs,
     primal_time=primal_times,
     upper_bound_time=dense_rec_times,
-    time=primal_times + dense_rec_times)
+    time=primal_times + replace(dense_rec_times, NaN => 0.0))
 
 
 output_dir_path = deck_dir * output_path
 mkpath(output_dir_path)
-writer(output_dir_path * "/convergence" * extension, philpott_df)
+writer(output_dir_path * "/convergence_philpott" * extension, philpott_df)
 
 # DualSDDP
 # iteration | primal_lbs  |            |   dual_ubs  | primal_times | dual_times | time
 
+dual_df = DataFrame(iteration=1:niters,
+    lower_bound=primal_lbs,
+    simulation=fill(NaN, niters),
+    upper_bound=dual_ubs,
+    primal_time=primal_times,
+    upper_bound_time=dual_times,
+    time=primal_times + dual_times)
+
+output_dir_path = deck_dir * output_path
+mkpath(output_dir_path)
+writer(output_dir_path * "/convergence_dual" * extension, dual_df)
+
+
 # Reagan (Baucke)
 # iteration | io_lbs      |            |   io_ubs    |   io_times   | time
+
+reagan_df = DataFrame(iteration=1:niters,
+    lower_bound=io_lbs,
+    simulation=fill(NaN, niters),
+    upper_bound=io_ubs,
+    time=io_times)
+
+output_dir_path = deck_dir * output_path
+mkpath(output_dir_path)
+writer(output_dir_path * "/convergence_reagan" * extension, reagan_df)
 

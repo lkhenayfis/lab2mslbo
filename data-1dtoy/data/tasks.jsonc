@@ -19,13 +19,13 @@
         "convergence": {
           // Min/Max number of iterations
           "min_iterations": 10,
-          "max_iterations": 256,
+          "max_iterations": 32,
           // Early stopping criteria and params
           "stopping_criteria": {
             // IterationLimit | TimeLimit | LowerBoundStability | Statistical | ...
             "kind": "IterationLimit",
             "params": {
-              "num_iterations": 256
+              "num_iterations": 32
             }
           }
         },
