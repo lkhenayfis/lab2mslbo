@@ -19,13 +19,13 @@
         "convergence": {
           // Min/Max number of iterations
           "min_iterations": 10,
-          "max_iterations": 32,
+          "max_iterations": 512,
           // Early stopping criteria and params
           "stopping_criteria": {
             // IterationLimit | TimeLimit | LowerBoundStability | Statistical | ...
             "kind": "IterationLimit",
             "params": {
-              "num_iterations": 32
+              "num_iterations": 512
             }
           }
         },
@@ -35,8 +35,8 @@
           // each risk measure might need different params,
           // such as the confidence level for AVaR, etc.
           "params": {
-            "alpha": 0.2,
-            "lambda": 0.9
+            "alpha": 0.5,
+            "lambda": 0.5
           }
         },
         "parallel_scheme": {
@@ -45,7 +45,6 @@
         },
         "results": {
           "path": "out/policy",
-
           "save": true,
           "format": {
             "kind": "ParquetFormat",
