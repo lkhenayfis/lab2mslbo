@@ -19,7 +19,6 @@ function build_mslbo(data_dir::String;
     problem_ub = fun_problem_ub(files)
     α = fun_α(files)
 
-    Random.seed!(seed)
     aux, saa = build_sddp_model(files)
     initial_states = get_initial_states(files)
 
@@ -164,6 +163,9 @@ function build_sddp_model(files::Vector{SDDPlab.Inputs.InputModule})::Tuple
     scenarios = SDDPlab.Inputs.get_scenarios(files)
     num_stages = get_num_stages(files)
 
+    seed = get_seed(files)
+
+    Random.seed!(seed)
     SAA = SDDPlab.Scenarios.generate_saa(scenarios, num_stages)
 
     return model, SAA
