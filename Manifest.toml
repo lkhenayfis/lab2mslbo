@@ -97,6 +97,18 @@ version = "0.10.8"
     SentinelArrays = "91c51154-3ec4-41a3-a24f-3f23e20d615c"
     StructTypes = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
 
+[[deps.Clp]]
+deps = ["Clp_jll", "LinearAlgebra", "MathOptInterface", "OpenBLAS32_jll"]
+git-tree-sha1 = "d4e0a2ed4b7fd1b50e0555e523b43504dcc51eaa"
+uuid = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
+version = "1.1.0"
+
+[[deps.Clp_jll]]
+deps = ["Artifacts", "CoinUtils_jll", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "METIS_jll", "MUMPS_seq_jll", "Osi_jll", "libblastrampoline_jll"]
+git-tree-sha1 = "d1b7e957b185d0c7f09e7e41a49409ae8ec47d03"
+uuid = "06985876-5285-5a41-9fcb-8948a742cc53"
+version = "100.1700.901+0"
+
 [[deps.CodecBzip2]]
 deps = ["Bzip2_jll", "TranscodingStreams"]
 git-tree-sha1 = "e7c529cc31bb85b97631b922fa2e6baf246f5905"
@@ -114,6 +126,12 @@ deps = ["TranscodingStreams", "Zstd_jll"]
 git-tree-sha1 = "d0073f473757f0d39ac9707f1eb03b431573cbd8"
 uuid = "6b39b394-51ab-5f42-8807-6242bab2b4c2"
 version = "0.8.6"
+
+[[deps.CoinUtils_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "libblastrampoline_jll"]
+git-tree-sha1 = "435a55fd4503bd8e9bbc670f013c748b349578e4"
+uuid = "be027038-0da8-5614-b30d-e42594cb92df"
+version = "200.1100.1100+0"
 
 [[deps.Combinatorics]]
 git-tree-sha1 = "08c8b6831dc00bfea825826be0bc8336fc369860"
@@ -361,6 +379,18 @@ git-tree-sha1 = "d1d712be3164d61d1fb98e7ce9bcbc6cc06b45ed"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 version = "1.10.8"
 
+[[deps.HiGHS]]
+deps = ["HiGHS_jll", "MathOptInterface", "PrecompileTools", "SparseArrays"]
+git-tree-sha1 = "e496960e84ed4dae66f7d670e820d2cbec4f623e"
+uuid = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
+version = "1.10.1"
+
+[[deps.HiGHS_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Zlib_jll"]
+git-tree-sha1 = "c12314e192631fc302078e27a06da5ab51770e3b"
+uuid = "8fd58aa0-07eb-5a78-9b36-339c94fd15ea"
+version = "1.8.0+0"
+
 [[deps.HypergeometricFunctions]]
 deps = ["LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
 git-tree-sha1 = "7c4195be1649ae622304031ed46a2f4df989f1eb"
@@ -522,6 +552,18 @@ git-tree-sha1 = "abf88ff67f4fd89839efcae2f4c39cbc4ecd0846"
 uuid = "5ced341a-0733-55b8-9ab6-a4889d929147"
 version = "1.10.0+1"
 
+[[deps.METIS_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "1fd0a97409e418b78c53fac671cf4622efdf0f21"
+uuid = "d00139f3-1899-568f-a2f0-47f597d42d70"
+version = "5.1.2+0"
+
+[[deps.MUMPS_seq_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "METIS_jll", "libblastrampoline_jll"]
+git-tree-sha1 = "85047ac569761e3387717480a38a61d2a67df45c"
+uuid = "d7ed1dd3-d0ae-5e8e-bfb4-87a502085b8d"
+version = "500.700.300+0"
+
 [[deps.MacroTools]]
 deps = ["Markdown", "Random"]
 git-tree-sha1 = "2fa9ee3e63fd3a4f7a9a4f4744a52f4856de82df"
@@ -584,6 +626,12 @@ version = "1.0.2"
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 version = "1.2.0"
 
+[[deps.OpenBLAS32_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "6065c4cff8fee6c6770b277af45d5082baacdba1"
+uuid = "656ef2d0-ae68-5445-9ca0-591084a874a2"
+version = "0.3.24+0"
+
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
@@ -616,6 +664,12 @@ version = "0.5.5+0"
 git-tree-sha1 = "dfdf5519f235516220579f949664f1bf44e741c5"
 uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 version = "1.6.3"
+
+[[deps.Osi_jll]]
+deps = ["Artifacts", "CoinUtils_jll", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "libblastrampoline_jll"]
+git-tree-sha1 = "a21705a10b737d94aa5da21424231287871b3ddf"
+uuid = "7da25872-d9ce-5375-a4d3-7a845f58efdd"
+version = "0.10800.1000+0"
 
 [[deps.PDMats]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
@@ -759,8 +813,8 @@ uuid = "f4570300-c277-11e8-125c-4912f86ce65d"
 version = "1.8.1"
 
 [[deps.SDDPlab]]
-deps = ["CSV", "Copulas", "DataFrames", "Dates", "Distributed", "Distributions", "GLPK", "Graphs", "JSON", "JuMP", "LinearAlgebra", "Logging", "Parquet", "Random", "SDDP", "Statistics", "Tables"]
-git-tree-sha1 = "efb4a607da2aaa69ddb71e002bb76a99f2267054"
+deps = ["CSV", "Clp", "Copulas", "DataFrames", "Dates", "Distributed", "Distributions", "GLPK", "Graphs", "HiGHS", "JSON", "JuMP", "LinearAlgebra", "Logging", "Parquet", "Random", "SDDP", "Statistics", "Tables"]
+git-tree-sha1 = "eae34720d232af3beece03fed02e5c5bc6b1538a"
 repo-rev = "io-refactor"
 repo-url = "https://github.com/rjmalves/sddp-lab.git"
 uuid = "5c1c4b2a-157d-4661-af07-65cbafd6173d"
