@@ -20,8 +20,9 @@ mutable struct SimpleLBOData
     SimpleLBOData() = new()
 end
 
-function SimpleLBOData(m::JuMP.Model, node_noises::Vector, lb::Float64, ub::Float64, α::Float64)
-
+function SimpleLBOData(
+    m::JuMP.Model, node_noises::Vector, lb::Float64, ub::Float64, α::Float64
+)
     slbod = SimpleLBOData()
 
     md = ModelData(m)
@@ -47,11 +48,10 @@ end
 
 function fill_costs!(slbod::SimpleLBOData, md::ModelData)
     state_t, state_t_1, control = get_state_control_indexes(md)
-    slbod.c = md.c[control]
+    return slbod.c = md.c[control]
 end
 
 function fill_equality_inequality_matrices!(slbod::SimpleLBOData, md::ModelData)
-    
     eq_ind, ineq_ind = get_equality_inequality_indexes(md)
     A, B, T = split_constraint_matrices(md)
 
@@ -61,12 +61,15 @@ function fill_equality_inequality_matrices!(slbod::SimpleLBOData, md::ModelData)
 
     slbod.A_ineq = A[ineq_ind, :]
     slbod.B_ineq = B[ineq_ind, :]
-    slbod.T_ineq = T[ineq_ind, :]
+    return slbod.T_ineq = T[ineq_ind, :]
 end
 
-function fill_equality_inequality_rhs!(slbod::SimpleLBOData, md::ModelData, noises::Vector;
-    prob::Vector{Float64} = ones(size(noises)) / length(noises))
-
+function fill_equality_inequality_rhs!(
+    slbod::SimpleLBOData,
+    md::ModelData,
+    noises::Vector;
+    prob::Vector{Float64} = ones(size(noises)) / length(noises),
+)
     eq_ind, ineq_ind = get_equality_inequality_indexes(md)
 
     M = length(noises)
@@ -77,7 +80,7 @@ function fill_equality_inequality_rhs!(slbod::SimpleLBOData, md::ModelData, nois
 
     slbod.d_eq = [d[eq_ind] for d in ds]
     slbod.d_ineq = [d[ineq_ind] for d in ds]
-    slbod.prob = prob
+    return slbod.prob = prob
 end
 
 function fill_bounds!(slbod::SimpleLBOData, md::ModelData)
@@ -89,6 +92,6 @@ function fill_bounds!(slbod::SimpleLBOData, md::ModelData)
     lb_control = md.x_lower[control]
     ub_control = md.x_upper[control]
 
-    slbod.Ux = ub_states    
-    slbod.Uy = ub_control
+    slbod.Ux = ub_states
+    return slbod.Uy = ub_control
 end

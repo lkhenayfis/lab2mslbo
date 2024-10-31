@@ -1,2 +1,0 @@
-id ,name   ,downstream_id ,bus_id ,productivity ,initial_storage ,min_storage ,max_storage ,min_generation ,max_generation ,spillage_penalty
- 1 ,"UHE1" ,-             ,     1 ,         1.0 ,           50.0 ,        0.0 ,      300.0 ,           0.0 ,          70.0 ,-

@@ -24,7 +24,7 @@ Take a vector of strings and return a single string `"(v_1, v_2, ..., v_n)"`
 function paste_vector(v::Vector{String})
     pasted = "(" * v[1]
     enum = Iterators.drop(enumerate(v), 1)
-    
+
     for (ind, elem) in enum
         pasted *= (", " * v[ind])
     end
@@ -41,7 +41,6 @@ end
 Find dummy variables (not used in any constraint) and remove them from the system matrices
 """
 function remove_dummy_variables!(md::ModelData)
-
     indexes = find_dummies(md.A)
     dummy_variables = md.x[indexes]
 
@@ -91,4 +90,81 @@ function check_zero_lower_bound(lower::Vector, vars::Vector{VariableRef})
         warn_msg *= " have non-zero lower bound -- revise inputs"
         @warn warn_msg
     end
+end
+
+# OUTPUT GENERATION --------------------------------------------------------------------------------
+
+function export_primal_with_ub_convergence(
+    niters::Int64,
+    primal_lbs::Vector{Float64},
+    primal_times::Vector{Float64},
+    rec_ubs::Vector{Tuple{Int64,Float64}},
+    rec_times::Vector{Float64},
+    writer::Function,
+    extension::String;
+    output_path_without_extension::String = "./convergence",
+)
+    dense_ubs = fill(NaN, niters)
+    for ub_pair in rec_ubs
+        dense_ubs[ub_pair[1]] = ub_pair[2]
+    end
+    dense_rec_times = fill(NaN, niters)
+    for (ub_pair, time) in zip(rec_ubs, rec_times)
+        dense_rec_times[ub_pair[1]] = time
+    end
+
+    df = DataFrame(;
+        iteration = 1:niters,
+        lower_bound = primal_lbs,
+        simulation = fill(NaN, niters),
+        upper_bound = dense_ubs,
+        primal_time = primal_times,
+        upper_bound_time = dense_rec_times,
+        time = primal_times + replace(dense_rec_times, NaN => 0.0),
+    )
+
+    return writer(output_path_without_extension * extension, df)
+end
+
+function export_primal_with_dual_ub_convergence(
+    niters::Int64,
+    primal_lbs::Vector{Float64},
+    primal_times::Vector{Float64},
+    dual_ubs::Vector{Float64},
+    dual_times::Vector{Float64},
+    writer::Function,
+    extension::String;
+    output_path_without_extension::String = "./convergence",
+)
+    df = DataFrame(;
+        iteration = 1:niters,
+        lower_bound = primal_lbs,
+        simulation = fill(NaN, niters),
+        upper_bound = dual_ubs,
+        primal_time = primal_times,
+        upper_bound_time = dual_times,
+        time = primal_times + dual_times,
+    )
+
+    return writer(output_path_without_extension * extension, df)
+end
+
+function export_problem_child_convergence(
+    niters::Int64,
+    io_lbs::Vector{Float64},
+    io_ubs::Vector{Float64},
+    io_times::Vector{Float64},
+    writer::Function,
+    extension::String;
+    output_path_without_extension::String = "./convergence",
+)
+    df = DataFrame(;
+        iteration = 1:niters,
+        lower_bound = io_lbs,
+        simulation = fill(NaN, niters),
+        upper_bound = io_ubs,
+        time = io_times,
+    )
+
+    return writer(output_path_without_extension * extension, df)
 end

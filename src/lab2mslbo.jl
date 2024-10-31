@@ -1,6 +1,7 @@
 module lab2mslbo
 
 using Random
+using DataFrames
 using SDDPlab
 using DualSDDP
 using SDDP, JuMP
@@ -12,6 +13,9 @@ include("aux.jl")
 include("bounds.jl")
 include("mslbo_builder.jl")
 
-export build_mslbo
+export build_mslbo,
+    export_primal_with_ub_convergence,
+    export_primal_with_dual_ub_convergence,
+    export_problem_child_convergence
 
 end

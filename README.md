@@ -17,13 +17,21 @@ activate .
 instantiate
 ```
 
+Caso seja necessário atualizar alguma das dependências diretas de repositórios, basta fazer, no contexto do `Pkg`de `julia`, por exemplo:
+
+```
+add https://github.com/rjmalves/sddp-lab.git#branch-tag
+```
+
 ## Uso
 
 A conversão de um deck do lab se realiza através da função `build_mslbo`
 
 ```julia
 include("src/lab2mslbo.jl")
-modelo = lab2mslbo.build_mslbo("data-refactor/", seed=1234);
+modelo, dados_lab = lab2mslbo.build_mslbo("data-1dtoy/");
 ```
 
-`modelo` é um objeto `DualSDDP.MSLBO` que pode ser utilizado com as demais funcionalidades do pacote.
+`modelo` é um objeto `DualSDDP.MSLBO` que pode ser utilizado com as demais funcionalidades do pacote e `dados_lab` é um objeto com diversas informações necessárias para compatibilização de resultados.
+
+Mais informações estão disponíveis no arquivo `exemplo.jl`.

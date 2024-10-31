@@ -6,4 +6,7 @@ mutable struct LabData
     output_path::String
     risk_alpha::Float64
     risk_lambda::Float64
+    solver::Any
+    writer::Function
+    extension::String
 end

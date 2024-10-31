@@ -13,4 +13,3 @@ function fix_infinity_bounds!(md::ModelData, sub_lower::Float64, sub_upper::Floa
         md.x_lower[i] = isinf(md.x_lower[i]) ? sub_lower : md.x_lower[i]
     end
 end
-

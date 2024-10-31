@@ -10,10 +10,11 @@ Build a `DualSDDP.MSLBO` object from a `SDDPlab` input data directory
   - `problem_ub::Vector{Float64}`: Upper bound on the value of the problem at each stage
   - `α::Vector{Float64}`: Upper bound on the Lipschitz constant at each stage
 """
-function build_mslbo(data_dir::String;
-    fun_problem_ub::Function=default_guess,
-    fun_α::Function=default_guess)::Tuple{DualSDDP.MSLBO,LabData,Any,Function,String}
-
+function build_mslbo(
+    data_dir::String;
+    fun_problem_ub::Function = default_guess,
+    fun_α::Function = default_guess,
+)::Tuple{DualSDDP.MSLBO,LabData}
     files = read_lab_inputs(data_dir)
     seed = get_seed(files)
     problem_ub = fun_problem_ub(files)
@@ -36,7 +37,7 @@ function build_mslbo(data_dir::String;
             slbod.lb,
             slbod.ub,
             slbod.α,
-            slbod.prob
+            slbod.prob,
         )
         push!(lbos, lbo)
     end
@@ -45,9 +46,23 @@ function build_mslbo(data_dir::String;
     risk_parameters = get_risk_measure_parameters(files)
     num_iterations = get_num_iterations(files)
     output_path = get_output_path(files)
-    data = LabData(initial_states, seed, num_stages, num_iterations, output_path, risk_parameters[1], risk_parameters[2])
+    solver = get_solver(files)
+    writer = get_writer(files)
+    extension = get_extension(files)
+    data = LabData(
+        initial_states,
+        seed,
+        num_stages,
+        num_iterations,
+        output_path,
+        risk_parameters[1],
+        risk_parameters[2],
+        solver,
+        writer,
+        extension,
+    )
 
-    return DualSDDP.build(lbos), data, get_solver(files), get_writer(files), get_extension(files)
+    return DualSDDP.build(lbos), data
 end
 
 function default_guess(files::Vector{SDDPlab.Inputs.InputModule})
@@ -96,7 +111,6 @@ function get_initial_states(files::Vector{SDDPlab.Inputs.InputModule})
     return initial_states
 end
 
-
 function get_seed(files::Vector{SDDPlab.Inputs.InputModule})
     return SDDPlab.Inputs.get_scenarios(files).seed
 end
@@ -128,7 +142,6 @@ function get_output_path(files::Vector{SDDPlab.Inputs.InputModule})::String
     return SDDPlab.get_tasks(files)[2].results.path
 end
 
-
 function get_risk_measure_parameters(files::Vector{SDDPlab.Inputs.InputModule})
     risk_obj = SDDPlab.get_tasks(files)[2].risk_measure
     if nameof(typeof(risk_obj)) == :Expectation
@@ -140,7 +153,6 @@ function get_risk_measure_parameters(files::Vector{SDDPlab.Inputs.InputModule})
     end
     return params
 end
-
 
 """
     build_sddp_model
@@ -167,6 +179,9 @@ function build_sddp_model(files::Vector{SDDPlab.Inputs.InputModule})::Tuple
 
     Random.seed!(seed)
     SAA = SDDPlab.Scenarios.generate_saa(scenarios, num_stages)
+    for u in 1:length(SAA[1])
+        SAA[1][u] .= SAA[1][1]
+    end
 
     return model, SAA
 end

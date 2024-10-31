@@ -12,7 +12,7 @@ end
 
 function ModelData(m::JuMP.Model)
     split = split_elements(m)
-    ModelData(split..., [0])
+    return ModelData(split..., [0])
 end
 
 # HELPERS ------------------------------------------------------------------------------------------
@@ -49,17 +49,16 @@ matrix, vector of costs, vector of lower and upper bounds on the constraints, as
 described in `JuMP.lp_matrix_data`
 """
 function split_elements(m::JuMP.Model)::Tuple
-    
     md = lp_matrix_data(m)
 
     # always removes epigraphical variable added last by SDDP.jl
-    variables = md.variables[1:end-1]
+    variables = md.variables[1:(end - 1)]
     costs = get_costs(m, variables)
-    A = Matrix(md.A)[:, 1:end-1]
+    A = Matrix(md.A)[:, 1:(end - 1)]
     b_lower = md.b_lower
     b_upper = md.b_upper
-    x_lower = md.x_lower[1:end-1]
-    x_upper = md.x_upper[1:end-1]
+    x_lower = md.x_lower[1:(end - 1)]
+    x_upper = md.x_upper[1:(end - 1)]
 
     return variables, costs, A, b_lower, b_upper, x_lower, x_upper
 end
@@ -125,13 +124,12 @@ function force_inequalities_to_geq!(md::ModelData)
 
     if any(ind)
         for i in ind
-            md.A[i,:] .*= -1
+            md.A[i, :] .*= -1
             md.b_lower[ind] = .-md.b_upper
             md.b_lower[ind] = -Inf
         end
     end
 end
-
 
 """
     find_delete_ω!(md::ModelData)
@@ -143,7 +141,7 @@ function find_delete_ω!(md::ModelData)
     ω_indices = get_variable_index(md.x, "ω_")
     md.sp_constraints = find_non_zero(ω_indices, md.A)
     md.A[:, ω_indices] .= 0
-    remove_dummy_variables!(md)
+    return remove_dummy_variables!(md)
 end
 
 # HELPERS ------------------------------------------------------------------------------------------
