@@ -179,6 +179,7 @@ function build_sddp_model(files::Vector{SDDPlab.Inputs.InputModule})::Tuple
 
     Random.seed!(seed)
     SAA = SDDPlab.Scenarios.generate_saa(scenarios, num_stages)
+    # Forces first deterministic stage for compatibility -- TODO: remove when not needed
     for u in 1:length(SAA[1])
         SAA[1][u] .= SAA[1][1]
     end
