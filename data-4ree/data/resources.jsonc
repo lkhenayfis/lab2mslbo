@@ -1,0 +1,17 @@
+{
+    "solver": {
+        // CLP | GLPK | HiGHS | CPLEX | Gurobi | ...
+        "kind": "HiGHS",
+        "params": {
+            "log_to_console": false
+        }
+    }
+    // TODO
+    // serial | parallel  
+    // "strategy": "serial",
+    // "processes": 1,
+    // // TCP/IP (Distributed) | MPI (MPI.jl)
+    // "communication": "TCP/IP",
+    // // slurm | pbs | local (ClusterManagers.jl)
+    // "manager": "slurm"
+}

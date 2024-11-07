@@ -4,12 +4,12 @@ using Random: seed!
 using lab2mslbo: lab2mslbo
 using DataFrames
 
-deck_dir = "./data-1dtoy/"
+deck_dir = "./data-4ree/"
 
-curdir = pwd()
-cd(deck_dir)
-SDDPlab.main()
-cd(curdir)
+# curdir = pwd()
+# cd(deck_dir)
+# SDDPlab.main()
+# cd(curdir)
 
 M, data = lab2mslbo.build_mslbo(deck_dir)
 
@@ -17,7 +17,7 @@ mkpath(deck_dir * data.output_path)
 
 risk = mk_primal_avar(data.risk_alpha; beta = data.risk_lambda)
 risk_dual = mk_copersp_avar(data.risk_alpha; beta = data.risk_lambda)
-ub_iters = Int64.(2 .^ (0:1:floor(log2(data.num_iterations))))
+ub_iters = Int64.(2 .^ (1:1:floor(log2(data.num_iterations))))
 
 ## Solution algorithms
 

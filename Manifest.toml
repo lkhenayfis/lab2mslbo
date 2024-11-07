@@ -293,9 +293,9 @@ version = "1.6.0"
 
 [[deps.DualSDDP]]
 deps = ["JuMP", "LinearAlgebra", "Random"]
-git-tree-sha1 = "c17bda45e735101eedbe67ff6ec4f04b941cbb74"
+git-tree-sha1 = "b3921189b68e9b7a9748ae51f6172863cb38971a"
 repo-rev = "main"
-repo-url = "git@github.com:bfpc/DualSDDP.jl.git"
+repo-url = "https://github.com/bfpc/DualSDDP.git"
 uuid = "7f8d178f-c40c-4e8c-bfb1-3d30c9997f30"
 version = "0.1.0"
 
@@ -814,7 +814,7 @@ version = "1.8.1"
 
 [[deps.SDDPlab]]
 deps = ["CSV", "Clp", "Copulas", "DataFrames", "Dates", "Distributed", "Distributions", "GLPK", "Graphs", "HiGHS", "JSON", "JuMP", "LinearAlgebra", "Logging", "Parquet", "Random", "SDDP", "Statistics", "Tables"]
-git-tree-sha1 = "eae34720d232af3beece03fed02e5c5bc6b1538a"
+git-tree-sha1 = "3be81fd617b68cd741b53a9410705c1966752b26"
 repo-rev = "io-refactor"
 repo-url = "https://github.com/rjmalves/sddp-lab.git"
 uuid = "5c1c4b2a-157d-4661-af07-65cbafd6173d"

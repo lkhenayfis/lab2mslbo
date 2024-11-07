@@ -1,0 +1,23 @@
+{
+  "seed": 42,
+  "initial_season": 1,
+  "branchings": 10,
+  "inflow": {
+    "stochastic_process": {
+      // AR | PAR | HMM | ...
+      "kind": "Naive",
+      "params": {
+        "file": "inflow_scenarios.jsonc"
+        // "marginal_models": [],
+        // "copulas": []
+      }
+    }
+  },
+  "load": {
+    // DeterministicLoad | ...
+    "kind": "DeterministicLoad",
+    "params": {
+      "file": "load.csv"
+    }
+  }
+}

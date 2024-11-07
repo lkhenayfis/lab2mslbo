@@ -1,2 +1,6 @@
 informals
 .vscode
+
+*.parquet
+*.log
+*.so
