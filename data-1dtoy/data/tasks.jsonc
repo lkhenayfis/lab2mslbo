@@ -19,13 +19,13 @@
         "convergence": {
           // Min/Max number of iterations
           "min_iterations": 2,
-          "max_iterations": 16,
+          "max_iterations": 256,
           // Early stopping criteria and params
           "stopping_criteria": {
             // IterationLimit | TimeLimit | LowerBoundStability | Statistical | ...
             "kind": "IterationLimit",
             "params": {
-              "num_iterations": 16
+              "num_iterations": 256
             }
           }
         },
@@ -57,7 +57,14 @@
       "kind": "Simulation",
       "params": {
         "num_simulated_series": 100,
-        "policy_path": "out/policy",
+        "policy": {
+          "load": false,
+          "path": "out/policy",
+          "format": {
+            "kind": "ParquetFormat",
+            "params": {}
+          }
+        },
         "parallel_scheme": {
           "kind": "Serial",
           "params": {}

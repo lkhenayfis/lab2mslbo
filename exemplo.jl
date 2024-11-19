@@ -6,10 +6,10 @@ using DataFrames
 
 deck_dir = "./data-4ree/"
 
-# curdir = pwd()
-# cd(deck_dir)
-# SDDPlab.main()
-# cd(curdir)
+curdir = pwd()
+cd(deck_dir)
+SDDPlab.main()
+cd(curdir)
 
 M, data = lab2mslbo.build_mslbo(deck_dir)
 
@@ -63,6 +63,8 @@ lab2mslbo.export_primal_with_ub_convergence(
     output_path_without_extension = deck_dir * data.output_path * "/convergence_philpott",
 )
 
+DualSDDP.write_cuts_to_file(primal_pb, deck_dir * data.output_path * "/primal_cuts.json")
+
 lab2mslbo.export_primal_with_dual_ub_convergence(
     data.num_iterations,
     primal_lbs,
@@ -74,6 +76,8 @@ lab2mslbo.export_primal_with_dual_ub_convergence(
     output_path_without_extension = deck_dir * data.output_path * "/convergence_dual",
 )
 
+DualSDDP.write_cuts_to_file(dual_pb, deck_dir * data.output_path * "/dual_cuts.json")
+
 lab2mslbo.export_problem_child_convergence(
     data.num_iterations,
     io_lbs,
@@ -83,3 +87,5 @@ lab2mslbo.export_problem_child_convergence(
     data.extension;
     output_path_without_extension = deck_dir * data.output_path * "/convergence_reagan",
 )
+
+DualSDDP.write_policy_to_file(io_pb, deck_dir * data.output_path * "/reagan_policy.json")
