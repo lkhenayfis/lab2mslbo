@@ -3,7 +3,8 @@
         // CLP | GLPK | HiGHS | CPLEX | Gurobi | ...
         "kind": "HiGHS",
         "params": {
-            "log_to_console": false
+            "log_to_console": false,
+            "presolve": "off"
         }
     }
     // TODO

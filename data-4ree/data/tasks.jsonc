@@ -19,13 +19,13 @@
         "convergence": {
           // Min/Max number of iterations
           "min_iterations": 2,
-          "max_iterations": 128,
+          "max_iterations": 10240,
           // Early stopping criteria and params
           "stopping_criteria": {
             // IterationLimit | TimeLimit | LowerBoundStability | Statistical | ...
             "kind": "IterationLimit",
             "params": {
-              "num_iterations": 128
+              "num_iterations": 1024
             }
           }
         },
@@ -52,25 +52,32 @@
           }
         }
       }
+    },
+    {
+      "kind": "Simulation",
+      "params": {
+        "num_simulated_series": 2000,
+        "policy": {
+          "load": false,
+          "path": "out/policy",
+          "format": {
+            "kind": "ParquetFormat",
+            "params": {}
+          }
+        },
+        "parallel_scheme": {
+          "kind": "Serial",
+          "params": {}
+        },
+        "results": {
+          "path": "out/simulation",
+          "save": true,
+          "format": {
+            "kind": "ParquetFormat",
+            "params": {}
+          }
+        }
+      }
     }
-    // {
-    //   "kind": "Simulation",
-    //   "params": {
-    //     "num_simulated_series": 2000,
-    //     "policy_path": "out/policy",
-    //     "parallel_scheme": {
-    //       "kind": "Serial",
-    //       "params": {}
-    //     },
-    //     "results": {
-    //       "path": "out/simulation",
-    //       "save": true,
-    //       "format": {
-    //         "kind": "ParquetFormat",
-    //         "params": {}
-    //       }
-    //     }
-    //   }
-    // }
   ]
 }
