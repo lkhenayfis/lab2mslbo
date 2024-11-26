@@ -1,3 +1,6 @@
+using JuMP: JuMP
+using SDDP: SDDP
+
 function __default_ub_guess(files::Vector{SDDPlab.Inputs.InputModule}, stage::Integer)
     algo = SDDPlab.Inputs.get_algorithm(files)
     num_stages = SDDPlab.Inputs.get_number_of_stages(algo)
@@ -31,8 +34,40 @@ function __default_α_guess(files::Vector{SDDPlab.Inputs.InputModule}, stage::In
     return guess
 end
 
+function __build_ub_model(files::Vector{SDDPlab.Inputs.InputModule})::SDDP.PolicyGraph
+    @info "Compiling upper model"
+    sp_builder = __generate_subproblem_builder(files)
+    algo = SDDPlab.Inputs.get_algorithm(files)
+    num_stages = SDDPlab.Inputs.get_number_of_stages(algo)
+    resources = SDDPlab.Inputs.get_resources(files)
+    optimizer = SDDPlab.Inputs.generate_optimizer(resources.solver)
 
-function __build_and_compute_ub_model(files::Vector{SDDPlab.Inputs.InputModule}, model::SDDP.PolicyGraph)
+    lip_builder(t) = __default_α_guess(files, t)
+    ub_builder(t) = __default_ub_guess(files, t)
+    ibf = InnerBellmanFunction(
+        lip_builder; upper_bound = ub_builder, vertex_type = SDDP.SINGLE_CUT
+    )
+
+    pb_inner = SDDP.LinearPolicyGraph(
+        sp_builder;
+        stages = num_stages,
+        sense = :Min,
+        optimizer = optimizer,
+        lower_bound = -Inf,
+        upper_bound = Inf,
+        bellman_function = ibf,
+    )
+
+    for (k, node) in pb_inner.nodes
+        SDDP.set_objective(node)
+    end
+
+    return pb_inner
+end
+
+function __build_and_compute_ub_model(
+    files::Vector{SDDPlab.Inputs.InputModule}, model::SDDP.PolicyGraph
+)
     @info "Evaluating upper policy"
     sp_builder = __generate_subproblem_builder(files)
     risk = SDDPlab.get_tasks(files)[2].risk_measure
@@ -44,21 +79,23 @@ function __build_and_compute_ub_model(files::Vector{SDDPlab.Inputs.InputModule},
 
     lip_builder(t) = __default_α_guess(files, t)
     ub_builder(t) = __default_ub_guess(files, t)
-    ibf = InnerBellmanFunction(lip_builder; upper_bound=ub_builder, vertex_type=SDDP.SINGLE_CUT)
+    ibf = InnerBellmanFunction(
+        lip_builder; upper_bound = ub_builder, vertex_type = SDDP.SINGLE_CUT
+    )
 
-    outer_model, upper_bound, upper_bound_time = build_compute_inner_dp(sp_builder, model;
-        num_stages=num_stages,
-        sense=:Min,
-        optimizer=optimizer,
-        lower_bound=0.0,
-        bellman_function=ibf,
-        risk_measures=risk_measure
+    outer_model, upper_bound, upper_bound_time = build_compute_inner_dp(
+        sp_builder,
+        model;
+        num_stages = num_stages,
+        sense = :Min,
+        optimizer = optimizer,
+        lower_bound = 0.0,
+        bellman_function = ibf,
+        risk_measures = risk_measure,
     )
 
     return outer_model, upper_bound, upper_bound_time
 end
-
-
 
 function __generate_subproblem_builder(files::Vector{SDDPlab.Inputs.InputModule})::Function
     system = SDDPlab.Inputs.get_system(files)
@@ -93,7 +130,9 @@ function __generate_subproblem_builder(files::Vector{SDDPlab.Inputs.InputModule}
     return fun_sp_build
 end
 
-function __add_load_balance!(m::JuMP.Model, files::Vector{SDDPlab.Inputs.InputModule}, node::Integer)
+function __add_load_balance!(
+    m::JuMP.Model, files::Vector{SDDPlab.Inputs.InputModule}, node::Integer
+)
     system = SDDPlab.Inputs.get_system(files)
     hydros_entities = SDDPlab.System.get_hydros_entities(system)
     thermals_entities = SDDPlab.System.get_thermals_entities(system)
@@ -125,12 +164,18 @@ function __add_load_balance!(m::JuMP.Model, files::Vector{SDDPlab.Inputs.InputMo
             m[SDDPlab.Core.REVERSE_EXCHANGE][j] - m[SDDPlab.Core.DIRECT_EXCHANGE][j] for
             j in 1:num_lines if lines_entities[j].source_bus_id == bus_ids[n]
         ) +
-        m[SDDPlab.Core.DEFICIT][bus_ids[n]] == SDDPlab.Scenarios.get_load(bus_ids[n], node, scenarios)
+        m[SDDPlab.Core.DEFICIT][bus_ids[n]] ==
+            SDDPlab.Scenarios.get_load(bus_ids[n], node, scenarios)
     )
     return nothing
 end
 
-function __update_convergence_file(files::Vector{SDDPlab.Inputs.InputModule}, upper_bound::Float64, upper_bound_time::Float64, e::CompositeException)
+function __update_convergence_file(
+    files::Vector{SDDPlab.Inputs.InputModule},
+    upper_bound::Float64,
+    upper_bound_time::Float64,
+    e::CompositeException,
+)
     tasks = SDDPlab.Inputs.Tasks.get_tasks(files)
     policy_index = findfirst(x -> isa(x, SDDPlab.Tasks.Policy), tasks)
     policy_output_path = tasks[policy_index].results.path
@@ -146,7 +191,7 @@ function __update_convergence_file(files::Vector{SDDPlab.Inputs.InputModule}, up
     rename!(convergence_df, "time" => "primal_time")
     convergence_df[!, "upper_bound_time"] = fill(0.0, nrow(convergence_df))
     convergence_df[nrow(convergence_df), "upper_bound_time"] = upper_bound_time
-    convergence_df[!, "time"] = convergence_df[!, "primal_time"] + convergence_df[!, "upper_bound_time"]
-    writer(filename, convergence_df)
+    convergence_df[!, "time"] =
+        convergence_df[!, "primal_time"] + convergence_df[!, "upper_bound_time"]
+    return writer(filename, convergence_df)
 end
-

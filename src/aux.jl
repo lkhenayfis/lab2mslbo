@@ -168,3 +168,17 @@ function export_problem_child_convergence(
 
     return writer(output_path_without_extension * extension, df)
 end
+
+function primal_cuts_json_to_table(
+    pb::DualSDDP.MSSP,
+    writer::Function,
+    extension::String;
+    output_path_without_extension::String = "./cuts",
+) end
+
+function dual_cuts_json_to_table(
+    pb::DualSDDP.MSSP,
+    writer::Function,
+    extension::String;
+    output_path_without_extension::String = "./cuts",
+) end

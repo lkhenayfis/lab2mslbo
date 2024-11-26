@@ -2,15 +2,14 @@ using DualSDDP
 using SDDPlab: SDDPlab
 using Random: seed!
 using lab2mslbo: lab2mslbo
-using DataFrames
 
 deck_dir = "./data-1dtoy/"
 curdir = pwd()
+e = CompositeException()
 
 ## ---------- InnerBellmanFunction calls ------------
 
 cd(deck_dir)
-e = CompositeException()
 
 # Runs policy evaluation
 entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", e)
@@ -30,16 +29,22 @@ lab2mslbo.__update_convergence_file(
     entrypoint.inputs.files, upper_bound, upper_bound_time, e
 )
 
-# Generates fake policy artifact
-# Index 1 has a EchoArtifact, Index 2 a PolicyArtifact...
-artifacts[2] = SDDPlab.Tasks.PolicyArtifact(
-    artifacts[policy_index].task, inner_policy, entrypoint.inputs.files
-)
+# Generates fake policy artifact and artifact vector
+task_definitions = SDDPlab.get_tasks(entrypoint.inputs.files)
+policy_task_index = findfirst(x -> isa(x, SDDPlab.Tasks.Policy), task_definitions)
+policy_task_definition = task_definitions[policy_task_index]
+
+artifacts = Vector{SDDPlab.Tasks.TaskArtifact}([
+    SDDPlab.Tasks.InputsArtifact(entrypoint.inputs.path, entrypoint.inputs.files),
+    SDDPlab.Tasks.PolicyArtifact(
+        policy_task_definition, inner_policy, entrypoint.inputs.files
+    ),
+])
 
 # Runs simulation again
-simulation_index = findfirst(x -> isa(x, SDDPlab.Tasks.SimulationArtifact), artifacts)
-simulation = artifacts[simulation_index].task
-a = SDDPlab.Tasks.run_task(simulation, artifacts, e)
+simulation_task_index = findfirst(x -> isa(x, SDDPlab.Tasks.Simulation), task_definitions)
+simulation_task_definition = task_definitions[simulation_task_index]
+a = SDDPlab.Tasks.run_task(simulation_task_definition, artifacts, e)
 SDDPlab.__save_results(a)
 
 ## ---------- DualSDDP calls ------------
@@ -124,3 +129,40 @@ lab2mslbo.export_problem_child_convergence(
 )
 
 DualSDDP.write_policy_to_file(io_pb, deck_dir * data.output_path * "/reagan_policy.json")
+
+## --------- InnerBellmanFunction calls with DualSDDP policy ---------
+
+cd(deck_dir)
+
+function vertex_name_parser(vertex_name::String)::String
+    # Expects vertex name to be xN -> STORAGE[N]
+    new_name = replace(vertex_name, "x" => "STORAGE[")
+    return new_name * "]"
+end
+
+entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", e)
+model = lab2mslbo.__build_ub_model(entrypoint.inputs.files)
+
+lab2mslbo.read_vertices_from_file(
+    model,
+    "out/policy/dual_cuts.json";
+    dualcuts = true,
+    vertex_name_parser = vertex_name_parser,
+    vertex_selection = false,
+)
+
+# Generates fake policy artifact and artifacts vector
+task_definitions = SDDPlab.get_tasks(entrypoint.inputs.files)
+policy_task_index = findfirst(x -> isa(x, SDDPlab.Tasks.Policy), task_definitions)
+policy_task_definition = task_definitions[policy_task_index]
+
+artifacts = Vector{SDDPlab.Tasks.TaskArtifact}([
+    SDDPlab.Tasks.InputsArtifact(entrypoint.inputs.path, entrypoint.inputs.files),
+    SDDPlab.Tasks.PolicyArtifact(policy_task_definition, model, entrypoint.inputs.files),
+])
+
+# Runs simulation
+simulation_task_index = findfirst(x -> isa(x, SDDPlab.Tasks.Simulation), task_definitions)
+simulation_task_definition = task_definitions[simulation_task_index]
+a = SDDPlab.Tasks.run_task(simulation_task_definition, artifacts, e)
+SDDPlab.__save_results(a)

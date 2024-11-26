@@ -4,6 +4,7 @@ using Random
 using DataFrames
 using SDDPlab
 using DualSDDP
+using JSON
 using SDDP, JuMP
 
 include("ModelData.jl")

@@ -6,8 +6,8 @@
 #  v. 2.0. If a copy of the MPL was not distributed with this file, You can
 #  obtain one at http://mozilla.org/MPL/2.0/.
 
-import JuMP
-import SDDP
+using JuMP: JuMP
+using SDDP: SDDP
 using JuMP: @variable, @constraint, set_normalized_coefficient
 
 mutable struct Vertex
@@ -59,7 +59,7 @@ function _add_vertex(
     xᵏ::Dict{Symbol,Float64},
     obj_y::Union{Nothing,NTuple{N,Float64}},
     belief_y::Union{Nothing,Dict{T,Float64}};
-    cut_selection::Bool=true,
+    cut_selection::Bool = true,
 ) where {N,T}
     vertex = Vertex(θᵏ, xᵏ, obj_y, belief_y, 1, nothing)
     _add_vertex_var_to_model(V, vertex)
@@ -68,7 +68,7 @@ function _add_vertex(
         # TODO(bfpc): implement cut selection
         nothing # _cut_selection_update(V, vertex, xᵏ)
     end
-    return
+    return nothing
 end
 
 # TODO(bfpc): implement Objective and Belief states
@@ -101,12 +101,11 @@ function _add_vertex_var_to_model(V::InnerConvexApproximation, vertex::Vertex)
     set_normalized_coefficient(model[:theta_cc], σk, vk)
 
     vertex.variable_ref = σk
-    return
+    return nothing
 end
 
-
-
-""" Exact vertex selection
+"""
+Exact vertex selection
 
 Test if (x_j, v_j) is covered by (cc x_i, cc v_i) + (0, t)
 
@@ -122,13 +121,16 @@ function _vertex_selection(V::InnerConvexApproximation, solver)
     @variable(m, 0 <= σ[1:nvertices] <= 1)
     @variable(m, t)
     @objective(m, Max, t)
-    @constraint(m, cc_x[k in state_keys],
-        sum(σ[i] * V.vertices[i].state[k] for i = 1:nvertices) .== 0)
-    @constraint(m, cc_t, sum(σ[i] * V.vertices[i].value for i = 1:nvertices) + t == 0)
-    @constraint(m, sum(σ[i] for i = 1:nvertices) == 1)
+    @constraint(
+        m,
+        cc_x[k in state_keys],
+        sum(σ[i] * V.vertices[i].state[k] for i in 1:nvertices) .== 0
+    )
+    @constraint(m, cc_t, sum(σ[i] * V.vertices[i].value for i in 1:nvertices) + t == 0)
+    @constraint(m, sum(σ[i] for i in 1:nvertices) == 1)
 
     remove_vars = VariableRef[]
-    for j = 1:nvertices
+    for j in 1:nvertices
         v = V.vertices[j]
         for k in state_keys
             JuMP.set_normalized_rhs(cc_x[k], v.state[k])
@@ -160,17 +162,17 @@ end
 
 An inner representation of the value function, currently only using
 
- 1) x - convex "resource" states
+ 1. x - convex "resource" states
 
 This function penalizes the convex combination constraint to define a valid
-    approximation in the entire state space.
+approximation in the entire state space.
 
 In addition, we have three types of vertices (x, v) (in "cut" terminology):
 
- 1) Single-cuts (also called "average" cuts in the literature), which involve
+ 1. Single-cuts (also called "average" cuts in the literature), which involve
     the risk-adjusted expectation of the cost-to-go.
- 2) Multi-cuts, which use a different cost-to-go term for each realization w.
- 3) Risk-cuts, which correspond to the facets of the dual interpretation of a
+ 2. Multi-cuts, which use a different cost-to-go term for each realization w.
+ 3. Risk-cuts, which correspond to the facets of the dual interpretation of a
     convex risk measure.
 
 Therefore, InnerBellmanFunction returns a JuMP model of the following form (when minimizing):
@@ -209,18 +211,19 @@ end
         vertex_type::SDDP.CutType = SDDP.MULTI_CUT,
     )
 """
-function InnerBellmanFunction(Lipschitz_constant;
-    lower_bound=-Inf,
-    upper_bound=Inf,
-    deletion_minimum::Int=1,
-    vertex_type::SDDP.CutType=SDDP.MULTI_CUT,
+function InnerBellmanFunction(
+    Lipschitz_constant;
+    lower_bound = -Inf,
+    upper_bound = Inf,
+    deletion_minimum::Int = 1,
+    vertex_type::SDDP.CutType = SDDP.MULTI_CUT,
 )
     return SDDP.InstanceFactory{InnerBellmanFunction}(;
-        Lipschitz_constant=Lipschitz_constant,
-        lower_bound=lower_bound,
-        upper_bound=upper_bound,
-        deletion_minimum=deletion_minimum,
-        vertex_type=vertex_type,
+        Lipschitz_constant = Lipschitz_constant,
+        lower_bound = lower_bound,
+        upper_bound = upper_bound,
+        deletion_minimum = deletion_minimum,
+        vertex_type = vertex_type,
     )
 end
 
@@ -250,12 +253,11 @@ function SDDP.initialize_bellman_function(
     model::SDDP.PolicyGraph{T},
     node::SDDP.Node{T},
 ) where {T}
-    lower_bound, upper_bound, deletion_minimum, vertex_type, Lipschitz_constant =
-        -Inf, Inf, 0, SDDP.SINGLE_CUT, 0.0
+    lower_bound, upper_bound, deletion_minimum, vertex_type, Lipschitz_constant = -Inf,
+    Inf, 0, SDDP.SINGLE_CUT,
+    0.0
     if length(factory.args) > 0
-        error(
-            "Positional arguments $(factory.args) ignored in InnerBellmanFunction.",
-        )
+        error("Positional arguments $(factory.args) ignored in InnerBellmanFunction.")
     end
     # TODO(bfpc): generalize to dictionaries for lb/ub/Lip, taking node as keys
     for (kw, value) in factory.kwargs
@@ -271,9 +273,7 @@ function SDDP.initialize_bellman_function(
         elseif kw == :Lipschitz_constant
             Lipschitz_constant = value
         else
-            error(
-                "Keyword $(kw) not recognised as argument to InnerBellmanFunction.",
-            )
+            error("Keyword $(kw) not recognised as argument to InnerBellmanFunction.")
         end
     end
     if lower_bound == -Inf && upper_bound == Inf
@@ -310,7 +310,9 @@ function SDDP.initialize_bellman_function(
 
     return InnerBellmanFunction(
         vertex_type,
-        InnerConvexApproximation(Θᴳ, x′, obj_μ, belief_μ, deletion_minimum, Lipschitz_constant),
+        InnerConvexApproximation(
+            Θᴳ, x′, obj_μ, belief_μ, deletion_minimum, Lipschitz_constant
+        ),
         InnerConvexApproximation[],
         Set{Vector{Float64}}(),
         Lipschitz_constant,
@@ -359,9 +361,9 @@ function _refine_inner_bellman_function_no_lock(
 ) where {T}
     # Sanity checks.
     @assert length(dual_variables) ==
-            length(noise_supports) ==
-            length(nominal_probability) ==
-            length(objective_realizations)
+        length(noise_supports) ==
+        length(nominal_probability) ==
+        length(objective_realizations)
     # Preliminaries that are common to all cut types.
     risk_adjusted_probability = similar(nominal_probability)
     offset = SDDP.adjust_probability(
@@ -416,23 +418,10 @@ function _add_average_vertex(
     end
     # Now add the average-vertex to the subproblem. We include the objective-state
     # component μᵀy and the belief state (if it exists).
-    obj_y =
-        node.objective_state === nothing ? nothing : node.objective_state.state
-    belief_y =
-        node.belief_state === nothing ? nothing : node.belief_state.belief
-    _add_vertex(
-        node.bellman_function.global_theta,
-        θᵏ,
-        outgoing_state,
-        obj_y,
-        belief_y,
-    )
-    return (
-        theta=θᵏ,
-        x=outgoing_state,
-        obj_y=obj_y,
-        belief_y=belief_y,
-    )
+    obj_y = node.objective_state === nothing ? nothing : node.objective_state.state
+    belief_y = node.belief_state === nothing ? nothing : node.belief_state.belief
+    _add_vertex(node.bellman_function.global_theta, θᵏ, outgoing_state, obj_y, belief_y)
+    return (theta = θᵏ, x = outgoing_state, obj_y = obj_y, belief_y = belief_y)
 end
 
 function model_type(model::SDDP.PolicyGraph{T}) where {T}
@@ -443,20 +432,23 @@ function build_compute_inner_dp(
     build::Function,
     pb::SDDP.PolicyGraph;
     num_stages::Int,
-    sense::Symbol=:Min,
+    sense::Symbol = :Min,
     optimizer,
-    lower_bound::Float64=-Inf,
-    upper_bound::Float64=Inf,
+    lower_bound::Float64 = -Inf,
+    upper_bound::Float64 = Inf,
     bellman_function,
     risk_measures::SDDP.AbstractRiskMeasure,
-    print_level::Int=1,
+    print_level::Int = 1,
 )
-
-    pb_inner = SDDP.LinearPolicyGraph(build;
-        stages=num_stages,
-        sense, optimizer,
-        lower_bound, upper_bound,
-        bellman_function)
+    pb_inner = SDDP.LinearPolicyGraph(
+        build;
+        stages = num_stages,
+        sense,
+        optimizer,
+        lower_bound,
+        upper_bound,
+        bellman_function,
+    )
 
     for (k, node) in pb_inner.nodes
         SDDP.set_objective(node)
@@ -465,7 +457,7 @@ function build_compute_inner_dp(
     opts = SDDP.Options(pb_inner, pb.initial_root_state; risk_measures)
     T = model_type(pb_inner)
     total_dt = 0.0
-    for node_index in sort(collect(keys(pb.nodes)), rev=true)[2:end]
+    for node_index in sort(collect(keys(pb.nodes)); rev = true)[2:end]
         dt = @elapsed begin
             node = pb_inner[node_index]
             fw_samples = pb[node_index].bellman_function.global_theta.sampled_states
@@ -500,15 +492,18 @@ function build_compute_inner_dp(
         end
         dt_vs = @elapsed _vertex_selection(node.bellman_function.global_theta, optimizer)
         if print_level > 0
-            println("Node: $(node_index) - elapsed time: ", round(dt, digits=2), " plus ", round(dt_vs, digits=2), " for vertex selection.")
+            println(
+                "Node: $(node_index) - elapsed time: ",
+                round(dt; digits = 2),
+                " plus ",
+                round(dt_vs; digits = 2),
+                " for vertex selection.",
+            )
         end
         total_dt += dt + dt_vs
     end
 
-    ub = SDDP.calculate_bound(
-        pb_inner;
-        risk_measure=risk_measures
-    )
+    ub = SDDP.calculate_bound(pb_inner; risk_measure = risk_measures)
     if print_level > 0
         println("First-stage upper bound: ", ub)
         println("Total time for upper bound: ", total_dt)
@@ -516,18 +511,25 @@ function build_compute_inner_dp(
     return pb_inner, ub, total_dt
 end
 
-
-function _get_vertex_info(json_vertex, dualcuts)
+function _get_vertex_info(
+    json_vertex, dualcuts; vertex_name_parser::Function = _vertex_name_parser
+)
     if dualcuts
-        value = -json_vertex["value"]
-        state = Dict(Symbol(k) => v for (k, v) in json_vertex["coefficients"])
+        value = -json_vertex["intercept"]
+        state = Dict(
+            Symbol(vertex_name_parser(k)) => v for (k, v) in json_vertex["coefficients"]
+        )
     else
         value = json_vertex["value"]
-        state = Dict(Symbol(k) => v for (k, v) in json_vertex["state"])
+        state = Dict(Symbol(vertex_name_parser(k)) => v for (k, v) in json_vertex["state"])
     end
     obj_y = nothing
     belief_y = nothing
     return value, state, obj_y, belief_y
+end
+
+function _vertex_name_parser(vertex_name::String)::String
+    return vertex_name
 end
 
 """
@@ -546,23 +548,23 @@ type `T`, provide a function `node_name_parser` with the signature
 
 ## Keyword arguments
 
- - `dualcuts::Bool` transform dual cuts into vertices.
+  - `dualcuts::Bool` transform dual cuts into vertices.
 
- - `node_name_parser(T, name::String)::T where {T}` that returns the name of each
+  - `node_name_parser(T, name::String)::T where {T}` that returns the name of each
     node given the string name `name`.
     If `node_name_parser` returns `nothing`, those cuts are skipped.
-
- - `vertex_selection::Bool` run or not the exact vertex selection algorithm when
+  - `vertex_selection::Bool` run or not the exact vertex selection algorithm when
     adding vertices to the model.
 """
 function read_vertices_from_file(
     model::SDDP.PolicyGraph{T},
     filename::String;
-    dualcuts::Bool=false,
-    node_name_parser::Function=_node_name_parser,
-    vertex_selection::Bool=true,
+    dualcuts::Bool = false,
+    node_name_parser::Function = (::Type{Int64}, x::String) -> parse(Int64, x),
+    vertex_name_parser::Function = _vertex_name_parser,
+    vertex_selection::Bool = true,
 ) where {T}
-    vertices = JSON.parsefile(filename; use_mmap=false)
+    vertices = JSON.parsefile(filename; use_mmap = false)
     for node_info in vertices
         node_name = node_name_parser(T, node_info["node"])::Union{Nothing,T}
         if node_name === nothing
@@ -573,14 +575,10 @@ function read_vertices_from_file(
         # Loop through and add the vertices.
         list = (dualcuts ? node_info["single_cuts"] : node_info["vertices"])
         for json_vertex in list
-            value, state, obj_y, belief_y = _get_vertex_info(json_vertex, dualcuts)
-            _add_vertex(
-                bf.global_theta,
-                value,
-                state,
-                obj_y,
-                belief_y,
+            value, state, obj_y, belief_y = _get_vertex_info(
+                json_vertex, dualcuts; vertex_name_parser = vertex_name_parser
             )
+            _add_vertex(bf.global_theta, value, state, obj_y, belief_y)
         end
         if vertex_selection
             _vertex_selection(bf.global_theta, optimizer)
@@ -591,23 +589,15 @@ function read_vertices_from_file(
         # (ii) the cuts that define the risk set
         # There is one additional complication: if these cuts are being read
         # into a new model, the local theta variables may not exist yet.
-        if length(node_cuts["risk_set_cuts"]) > 0
-            _add_locals_if_necessary(
-                node,
-                bf,
-                length(first(node_cuts["risk_set_cuts"])),
-            )
+        if length(node_info["risk_set_cuts"]) > 0
+            _add_locals_if_necessary(node, bf, length(first(node_info["risk_set_cuts"])))
         end
         list = (dualcuts ? node_info["multi_cuts"] : node_info["multi_vertices"])
         for json_vertex in list
             @error "Multi-vertices not yet implemented."
             value, state, obj_y, belief_y = _get_vertex_info(json_vertex, dualcuts)
             _add_vertex(
-                bf.local_thetas[json_vertex["realization"]],
-                value,
-                state,
-                obj_y,
-                belief_y,
+                bf.local_thetas[json_vertex["realization"]], value, state, obj_y, belief_y
             )
         end
         if vertex_selection && length(list) > 0
@@ -617,12 +607,11 @@ function read_vertices_from_file(
         end
         # Here is part (ii): adding the constraints that define the risk-set
         # representation of the risk measure.
-        for json_cut in node_cuts["risk_set_cuts"]
+        for json_cut in node_info["risk_set_cuts"]
             expr = @expression(
                 node.subproblem,
-                bf.global_theta.theta - sum(
-                    p * V.theta for (p, V) in zip(json_cut, bf.local_thetas)
-                )
+                bf.global_theta.theta -
+                    sum(p * V.theta for (p, V) in zip(json_cut, bf.local_thetas))
             )
             if JuMP.objective_sense(node.subproblem) == MOI.MIN_SENSE
                 @constraint(node.subproblem, expr >= 0)
@@ -631,5 +620,5 @@ function read_vertices_from_file(
             end
         end
     end
-    return
+    return nothing
 end

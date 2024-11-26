@@ -25,14 +25,20 @@ lab2mslbo.__update_convergence_file(
     entrypoint.inputs.files, upper_bound, upper_bound_time, e
 )
 
-# Generates fake policy artifact
-# Index 1 has a EchoArtifact, Index 2 a PolicyArtifact...
-artifacts[2] = SDDPlab.Tasks.PolicyArtifact(
-    artifacts[policy_index].task, inner_policy, entrypoint.inputs.files
-)
+# Generates fake policy artifact and artifact vector
+task_definitions = SDDPlab.get_tasks(entrypoint.inputs.files)
+policy_task_index = findfirst(x -> isa(x, SDDPlab.Tasks.Policy), task_definitions)
+policy_task_definition = task_definitions[policy_task_index]
+
+artifacts = Vector{SDDPlab.Tasks.TaskArtifact}([
+    SDDPlab.Tasks.InputsArtifact(entrypoint.inputs.path, entrypoint.inputs.files),
+    SDDPlab.Tasks.PolicyArtifact(
+        policy_task_definition, inner_policy, entrypoint.inputs.files
+    ),
+])
 
 # Runs simulation again
-simulation_index = findfirst(x -> isa(x, SDDPlab.Tasks.SimulationArtifact), artifacts)
-simulation = artifacts[simulation_index].task
-a = SDDPlab.Tasks.run_task(simulation, artifacts, e)
+simulation_task_index = findfirst(x -> isa(x, SDDPlab.Tasks.Simulation), task_definitions)
+simulation_task_definition = task_definitions[simulation_task_index]
+a = SDDPlab.Tasks.run_task(simulation_task_definition, artifacts, e)
 SDDPlab.__save_results(a)

@@ -93,3 +93,11 @@ inner_policy, upper_bound, upper_bound_time = lab2mslbo.__build_and_compute_ub_m
     entrypoint.inputs.files, policy
 )
 ```
+
+### Cálculo de política com DualSDDP + simulação com aproximação interior
+
+Um exemplo completo está disponível no arquivo `exemplo_dual_inner.jl`, existente na raiz do repositório.
+
+Usando a função `read_vertices_from_file()` é possível ler um arquivo no formato `.json` exportado pelo `DualSDDP` com a política calculada, no formato de vértices para formar a aproximação interior, da maneira semelhante à do exemplo de uso anterior.
+
+Em geral, este caso consiste em realizar uma execução que combina os dois exemplos anteriores, com uma execução do `SDDPlab` através do `DualSDDP` para cálculo de alguma política com `dualsolve()` ou `problem_child_solve()`, exportar a política para o arquivo `.json` e realizar a leitura com `read_vertices_from_file()`. O `SDDP.PolicyGraph` construído desta forma pode ser utilizado normalmente para a realização de simulações com `SDDP.simulate()`. 
