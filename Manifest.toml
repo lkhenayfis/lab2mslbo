@@ -367,6 +367,18 @@ git-tree-sha1 = "1dc470db8b1131cfc7fb4c115de89fe391b9e780"
 uuid = "86223c79-3864-5bf0-83f7-82e725a168b6"
 version = "1.12.0"
 
+[[deps.Gurobi]]
+deps = ["Gurobi_jll", "Libdl", "MathOptInterface"]
+git-tree-sha1 = "af1ed252e300c3be3f7487d5d357f9eb51bb4403"
+uuid = "2e9cd046-0924-5485-92f1-d5272153d98b"
+version = "1.4.0"
+
+[[deps.Gurobi_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "91f655524b6600deeda43054793535db81569b11"
+uuid = "c018c7e6-a5b0-4aea-8f80-9c1ef9991411"
+version = "12.0.0"
+
 [[deps.HCubature]]
 deps = ["Combinatorics", "DataStructures", "LinearAlgebra", "QuadGK", "StaticArrays"]
 git-tree-sha1 = "19ef9f0cb324eed957b7fe7257ac84e8ed8a48ec"
@@ -824,8 +836,8 @@ uuid = "f4570300-c277-11e8-125c-4912f86ce65d"
 version = "1.10.0"
 
 [[deps.SDDPlab]]
-deps = ["CSV", "Clp", "Copulas", "DataFrames", "Dates", "Distributed", "Distributions", "GLPK", "Graphs", "HiGHS", "JSON", "JuMP", "LinearAlgebra", "Logging", "Parquet", "Random", "SDDP", "Statistics", "Tables"]
-git-tree-sha1 = "4fa4c43304d50d5f9646f93b49d6aecd9762777e"
+deps = ["CSV", "Clp", "Copulas", "DataFrames", "Dates", "Distributed", "Distributions", "GLPK", "Graphs", "Gurobi", "HiGHS", "JSON", "JuMP", "LinearAlgebra", "Logging", "Parquet", "Random", "SDDP", "Statistics", "Tables"]
+git-tree-sha1 = "770870a344888fc822e831c86d5c30803b800c66"
 repo-rev = "io-refactor"
 repo-url = "https://github.com/rjmalves/sddp-lab.git"
 uuid = "5c1c4b2a-157d-4661-af07-65cbafd6173d"
