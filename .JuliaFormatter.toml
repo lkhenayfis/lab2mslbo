@@ -1,0 +1,4 @@
+style = "blue"
+always_for_in = true
+whitespace_in_kwargs = true
+format_docstrings = true

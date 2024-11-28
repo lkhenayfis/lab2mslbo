@@ -1,0 +1,11 @@
+id ,name               ,source_bus_id ,target_bus_id ,capacity ,exchange_penalty
+ 1 ,"SUDESTE_SUL"      ,            1 ,            2 ,    7500 ,0.1
+ 2 ,"SUDESTE_NORDESTE" ,            1 ,            3 ,    1000 ,0.1
+ 3 ,"SUDESTE_NOFICT1"  ,            1 ,            5 ,    4000 ,0.05
+ 4 ,"SUL_SUDESTE"      ,            2 ,            1 ,    5470 ,0.1
+ 5 ,"NORDESTE_SUDESTE" ,            3 ,            1 ,     600 ,0.1
+ 6 ,"NORDESTE_NOFICT1" ,            3 ,            5 ,    3500 ,0.05
+ 7 ,"NORTE_NOFICT1"    ,            4 ,            5 ,   10000 ,0.05
+ 8 ,"NOFICT1_SUDESTE"  ,            5 ,            1 ,    2940 ,0.05
+ 9 ,"NOFICT1_NORDESTE" ,            5 ,            1 ,    3300 ,0.05
+10 ,"NOFICT1_NORTE"    ,            5 ,            1 ,    4407 ,0.05

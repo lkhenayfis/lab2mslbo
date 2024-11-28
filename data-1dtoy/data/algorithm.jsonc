@@ -23,68 +23,6 @@
         "kind": "ExplicitHorizon",
         "params": {
             "file": "stages.csv"
-            // "stages": [
-            //     {
-            //         "index": 1,
-            //         "start_date": "2020-01-01",
-            //         "end_date": "2020-02-01"
-            //     },
-            //     {
-            //         "index": 2,
-            //         "start_date": "2020-02-01",
-            //         "end_date": "2020-03-01"
-            //     },
-            //     {
-            //         "index": 3,
-            //         "start_date": "2020-03-01",
-            //         "end_date": "2020-04-01"
-            //     },
-            //     {
-            //         "index": 4,
-            //         "start_date": "2020-04-01",
-            //         "end_date": "2020-05-01"
-            //     },
-            //     {
-            //         "index": 5,
-            //         "start_date": "2020-05-01",
-            //         "end_date": "2020-06-01"
-            //     },
-            //     {
-            //         "index": 6,
-            //         "start_date": "2020-06-01",
-            //         "end_date": "2020-07-01"
-            //     },
-            //     {
-            //         "index": 7,
-            //         "start_date": "2020-07-01",
-            //         "end_date": "2020-08-01"
-            //     },
-            //     {
-            //         "index": 8,
-            //         "start_date": "2020-08-01",
-            //         "end_date": "2020-09-01"
-            //     },
-            //     {
-            //         "index": 9,
-            //         "start_date": "2020-09-01",
-            //         "end_date": "2020-10-01"
-            //     },
-            //     {
-            //         "index": 10,
-            //         "start_date": "2020-10-01",
-            //         "end_date": "2020-11-01"
-            //     },
-            //     {
-            //         "index": 11,
-            //         "start_date": "2020-11-01",
-            //         "end_date": "2020-12-01"
-            //     },
-            //     {
-            //         "index": 12,
-            //         "start_date": "2020-12-01",
-            //         "end_date": "2021-01-01"
-            //     }
-            // ]
         }
         // TODO - stages with different lengths demand
         // unit conversions when constructing each subproblem
@@ -92,5 +30,4 @@
     // TODO - policy graph x stochastic processes
     // some other fields may influence the policy graph
     // like scenarios, load, costs, etc.
-
 }

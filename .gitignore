@@ -1,2 +1,9 @@
 informals
 .vscode
+
+*.parquet
+*.log
+*.so
+
+data-1dtoy/out/**
+data-4ree/out/**

@@ -1,8 +1,11 @@
 {
     "solver": {
         // CLP | GLPK | HiGHS | CPLEX | Gurobi | ...
-        "kind": "GLPK",
-        "params": {}
+        "kind": "HiGHS",
+        "params": {
+            "log_to_console": false,
+            "presolve": "off"
+        }
     }
     // TODO
     // serial | parallel  

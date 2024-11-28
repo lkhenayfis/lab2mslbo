@@ -1,0 +1,783 @@
+{
+    // defines the distributions of uncertainty for each system element
+    "marginal_models": [
+        {
+            "id": 1,
+            // array of distribution specifications
+            "distributions": [
+                {
+                    "season": 1,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        10.895608369450507,
+                        0.2718782532480664
+                    ]
+                },
+                {
+                    "season": 2,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        10.934549089441743,
+                        0.29236634772996656
+                    ]
+                },
+                {
+                    "season": 3,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        10.873328061587221,
+                        0.27048286708005775
+                    ]
+                },
+                {
+                    "season": 4,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        10.60238381675085,
+                        0.24025928759654955
+                    ]
+                },
+                {
+                    "season": 5,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        10.279999565918283,
+                        0.21231874744052734
+                    ]
+                },
+                {
+                    "season": 6,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        10.10705210768406,
+                        0.21721937258343454
+                    ]
+                },
+                {
+                    "season": 7,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.931559438600134,
+                        0.21241155043237883
+                    ]
+                },
+                {
+                    "season": 8,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.756559653790685,
+                        0.2139187891978292
+                    ]
+                },
+                {
+                    "season": 9,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.723216434944502,
+                        0.2758687106270143
+                    ]
+                },
+                {
+                    "season": 10,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.908874417138296,
+                        0.2838244595607222
+                    ]
+                },
+                {
+                    "season": 11,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        10.171875377662312,
+                        0.23463705953956643
+                    ]
+                },
+                {
+                    "season": 12,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        10.586514771157274,
+                        0.2552966412570965
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 2,
+            // array of distribution specifications
+            "distributions": [
+                {
+                    "season": 1,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.739412109952495,
+                        0.5417339027448977
+                    ]
+                },
+                {
+                    "season": 2,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.855401018968479,
+                        0.587062769668276
+                    ]
+                },
+                {
+                    "season": 3,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.71233998805047,
+                        0.4965962489438251
+                    ]
+                },
+                {
+                    "season": 4,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.596837168382487,
+                        0.5978772955706558
+                    ]
+                },
+                {
+                    "season": 5,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.72671175555216,
+                        0.7923787729039518
+                    ]
+                },
+                {
+                    "season": 6,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.985646460834277,
+                        0.6470051964276479
+                    ]
+                },
+                {
+                    "season": 7,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.069401917726008,
+                        0.58627846448495
+                    ]
+                },
+                {
+                    "season": 8,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.011538342271665,
+                        0.6641119206154783
+                    ]
+                },
+                {
+                    "season": 9,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.204110222150408,
+                        0.6209913031011834
+                    ]
+                },
+                {
+                    "season": 10,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.334350807518687,
+                        0.569586293202265
+                    ]
+                },
+                {
+                    "season": 11,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.983474304725933,
+                        0.556567606924271
+                    ]
+                },
+                {
+                    "season": 12,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.740160659353652,
+                        0.5885411830705176
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 3,
+            // array of distribution specifications
+            "distributions": [
+                {
+                    "season": 1,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.510819612835263,
+                        0.3204163884495852
+                    ]
+                },
+                {
+                    "season": 2,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.515522723718577,
+                        0.42767921124560715
+                    ]
+                },
+                {
+                    "season": 3,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.488784348333603,
+                        0.4469381535931206
+                    ]
+                },
+                {
+                    "season": 4,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.295150697433515,
+                        0.4369781902660634
+                    ]
+                },
+                {
+                    "season": 5,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.796740827668641,
+                        0.4063691335917248
+                    ]
+                },
+                {
+                    "season": 6,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.422547844774572,
+                        0.3059174623862245
+                    ]
+                },
+                {
+                    "season": 7,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.241840581298431,
+                        0.2717577273331646
+                    ]
+                },
+                {
+                    "season": 8,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.104854736936831,
+                        0.26577116364664144
+                    ]
+                },
+                {
+                    "season": 9,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        7.99609739419613,
+                        0.2635377320145398
+                    ]
+                },
+                {
+                    "season": 10,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.074929553596323,
+                        0.3028156760195226
+                    ]
+                },
+                {
+                    "season": 11,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.538013399157304,
+                        0.3783794337171696
+                    ]
+                },
+                {
+                    "season": 12,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.155016478185951,
+                        0.3770003783096013
+                    ]
+                }
+            ]
+        },
+        {
+            "id": 4,
+            // array of distribution specifications
+            "distributions": [
+                {
+                    "season": 1,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.199811870076497,
+                        0.3526371761463086
+                    ]
+                },
+                {
+                    "season": 2,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.490470048827104,
+                        0.34437373088491463
+                    ]
+                },
+                {
+                    "season": 3,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.664517808381444,
+                        0.2771777385080506
+                    ]
+                },
+                {
+                    "season": 4,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.666501294174083,
+                        0.2501192005014891
+                    ]
+                },
+                {
+                    "season": 5,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        9.260661809092054,
+                        0.2819729078175153
+                    ]
+                },
+                {
+                    "season": 6,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.61748823762414,
+                        0.24976144349664395
+                    ]
+                },
+                {
+                    "season": 7,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.128432437010641,
+                        0.2032141367864269
+                    ]
+                },
+                {
+                    "season": 8,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        7.775683595222114,
+                        0.20398756015901814
+                    ]
+                },
+                {
+                    "season": 9,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        7.521322564212705,
+                        0.20614842860309826
+                    ]
+                },
+                {
+                    "season": 10,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        7.579135476071866,
+                        0.26098086305387513
+                    ]
+                },
+                {
+                    "season": 11,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.02066141812217,
+                        0.32638650285773146
+                    ]
+                },
+                {
+                    "season": 12,
+                    "kind": "LogNormal",
+                    "parameters": [
+                        8.648795532214837,
+                        0.3739186718415964
+                    ]
+                }
+            ]
+        }
+    ],
+    // defines the copulas used for multivariate simulation
+    // to achieve independent models one may use GaussianCopula with identity R matrix
+    "copulas": [
+        {
+            "season": 1,
+            // copula name, should be one implemented by Copulas.jl
+            "kind": "GaussianCopula",
+            // copula parameters, check the individual documentations for how each copula is
+            // parametrized
+            // In the case of matrix parameters, supply an array of arrays which will be 
+            // used to construct the matrix IN A ROW MAJOR FASHION, i.e. each sub-array
+            // will become an individual row
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        },
+        {
+            "season": 2,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        },
+        {
+            "season": 3,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        },
+        {
+            "season": 4,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        },
+        {
+            "season": 5,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        },
+        {
+            "season": 6,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        },
+        {
+            "season": 7,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        },
+        {
+            "season": 8,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        },
+        {
+            "season": 9,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        },
+        {
+            "season": 10,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        },
+        {
+            "season": 11,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        },
+        {
+            "season": 12,
+            "kind": "GaussianCopula",
+            "parameters": [
+                [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0
+                ],
+                [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ]
+        }
+    ]
+}
