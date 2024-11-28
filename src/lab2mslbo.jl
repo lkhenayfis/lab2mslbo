@@ -20,6 +20,7 @@ include("inner_dp_builder.jl")
 export build_mslbo,
     export_primal_with_ub_convergence,
     export_primal_with_dual_ub_convergence,
-    export_problem_child_convergence
+    export_problem_child_convergence,
+    translate_cuts_states
 
 end

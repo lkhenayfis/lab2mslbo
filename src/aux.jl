@@ -169,6 +169,26 @@ function export_problem_child_convergence(
     return writer(output_path_without_extension * extension, df)
 end
 
+function translate_cuts_states(filename::String, vertex_name_parser::Function)
+    policy = JSON.parsefile(filename; use_mmap = false)
+    keys_to_translate = ["state", "coefficients"]
+    for node_info in policy
+        for cut_info in node_info["single_cuts"]
+            for key in keys_to_translate
+                new_info = Dict{String,Float64}([])
+                for (name, value) in cut_info[key]
+                    new_info[vertex_name_parser(name)] = value
+                end
+                cut_info[key] = new_info
+            end
+        end
+    end
+    open(filename, "w") do f
+        JSON.print(f, policy)
+    end
+    return nothing
+end
+
 function primal_cuts_json_to_table(
     pb::DualSDDP.MSSP,
     writer::Function,
