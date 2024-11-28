@@ -294,19 +294,27 @@ function SDDP.initialize_bellman_function(
     belief_μ = node.belief_state !== nothing ? node.belief_state.μ : nothing
 
     # Model convex combination + Lipschitz penalty
-    @variable(sp, δ[keys(x′)])
-    @variable(sp, δ_abs[keys(x′)] >= 0)
-    @constraint(sp, [k in keys(x′)], δ_abs[k] >= δ[k])
-    @constraint(sp, [k in keys(x′)], δ_abs[k] >= -δ[k])
+    if length(node.children) != 0
+        @variable(sp, δ[keys(x′)])
+        @variable(sp, δ_abs[keys(x′)] >= 0)
+        @constraint(sp, [k in keys(x′)], δ_abs[k] >= δ[k])
+        @constraint(sp, [k in keys(x′)], δ_abs[k] >= -δ[k])
 
-    @variable(sp, 0 <= σ0 <= 1)
-    if JuMP.objective_sense(sp) == JuMP.MOI.MIN_SENSE
-        @constraint(sp, theta_cc, Lipschitz_constant * sum(δ_abs) + σ0 * upper_bound <= Θᴳ)
+        @variable(sp, 0 <= σ0 <= 1)
+        if JuMP.objective_sense(sp) == JuMP.MOI.MIN_SENSE
+            @constraint(
+                sp, theta_cc, Lipschitz_constant * sum(δ_abs) + σ0 * upper_bound <= Θᴳ
+            )
+        else
+            @constraint(
+                sp, theta_cc, Lipschitz_constant * sum(δ_abs) + σ0 * lower_bound >= Θᴳ
+            )
+        end
+        @constraint(sp, x_cc[k in keys(x′)], δ[k] == x′[k])
+        @constraint(sp, σ_cc, σ0 == 1)
     else
-        @constraint(sp, theta_cc, Lipschitz_constant * sum(δ_abs) + σ0 * lower_bound >= Θᴳ)
+        JuMP.fix(Θᴳ, 0.0)
     end
-    @constraint(sp, x_cc[k in keys(x′)], δ[k] == x′[k])
-    @constraint(sp, σ_cc, σ0 == 1)
 
     return InnerBellmanFunction(
         vertex_type,
