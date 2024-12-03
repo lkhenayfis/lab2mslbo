@@ -8,7 +8,7 @@
 
 using JuMP: JuMP
 using SDDP: SDDP
-using JuMP: @variable, @constraint, set_normalized_coefficient
+using JuMP: @variable, @constraint, @expression, set_normalized_coefficient
 
 mutable struct Vertex
     value::Float64
@@ -312,8 +312,12 @@ function SDDP.initialize_bellman_function(
         end
         @constraint(sp, x_cc[k in keys(x′)], δ[k] == x′[k])
         @constraint(sp, σ_cc, σ0 == 1)
+
+        @expression(sp, VERTEX_COVERAGE_DISTANCE, sum(δ_abs))
+
     else
         JuMP.fix(Θᴳ, 0.0)
+        @expression(sp, VERTEX_COVERAGE_DISTANCE, 0.0)
     end
 
     return InnerBellmanFunction(
