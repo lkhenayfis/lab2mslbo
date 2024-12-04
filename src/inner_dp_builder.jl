@@ -34,13 +34,13 @@ function __default_α_guess(files::Vector{SDDPlab.Inputs.InputModule}, stage::In
     return guess
 end
 
-function __build_ub_model(files::Vector{SDDPlab.Inputs.InputModule})::SDDP.PolicyGraph
+function __build_ub_model(
+    files::Vector{SDDPlab.Inputs.InputModule}, optimizer
+)::SDDP.PolicyGraph
     @info "Compiling upper model"
     sp_builder = __generate_subproblem_builder(files)
     algo = SDDPlab.Inputs.get_algorithm(files)
     num_stages = SDDPlab.Inputs.get_number_of_stages(algo)
-    resources = SDDPlab.Inputs.get_resources(files)
-    optimizer = SDDPlab.Inputs.generate_optimizer(resources.solver)
 
     lip_builder(t) = __default_α_guess(files, t)
     ub_builder(t) = __default_ub_guess(files, t)
@@ -66,7 +66,7 @@ function __build_ub_model(files::Vector{SDDPlab.Inputs.InputModule})::SDDP.Polic
 end
 
 function __build_and_compute_ub_model(
-    files::Vector{SDDPlab.Inputs.InputModule}, model::SDDP.PolicyGraph
+    files::Vector{SDDPlab.Inputs.InputModule}, model::SDDP.PolicyGraph, optimizer
 )
     @info "Evaluating upper policy"
     sp_builder = __generate_subproblem_builder(files)
@@ -74,8 +74,6 @@ function __build_and_compute_ub_model(
     risk_measure = SDDPlab.Tasks.generate_risk_measure(risk)
     algo = SDDPlab.Inputs.get_algorithm(files)
     num_stages = SDDPlab.Inputs.get_number_of_stages(algo)
-    resources = SDDPlab.Inputs.get_resources(files)
-    optimizer = SDDPlab.Inputs.generate_optimizer(resources.solver)
 
     lip_builder(t) = __default_α_guess(files, t)
     ub_builder(t) = __default_ub_guess(files, t)

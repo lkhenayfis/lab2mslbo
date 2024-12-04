@@ -1,9 +1,15 @@
+using JuMP
+using HiGHS
 using DualSDDP
 using SDDPlab: SDDPlab
 using Random: seed!
 using lab2mslbo: lab2mslbo
 
 deck_dir = "./data-1dtoy/"
+
+optimizer = optimizer_with_attributes(HiGHS.Optimizer)
+set_attribute(optimizer, "log_to_console", false)
+
 curdir = pwd()
 e = CompositeException()
 
@@ -11,7 +17,7 @@ e = CompositeException()
 
 cd(curdir)
 
-M, data = lab2mslbo.build_mslbo(deck_dir)
+M, data = lab2mslbo.build_mslbo(deck_dir, optimizer)
 
 mkpath(deck_dir * data.output_path)
 
@@ -20,7 +26,7 @@ risk = mk_primal_avar(data.risk_alpha; beta = data.risk_lambda)
 # Primal with outer and inner bounds
 seed!(data.seed)
 io_pb, io_lbs, io_ubs, io_times = problem_child_solve(
-    M, data.num_stages, risk, data.solver, data.state0, data.num_iterations; verbose = true
+    M, data.num_stages, risk, optimizer, data.state0, data.num_iterations; verbose = true
 );
 
 lab2mslbo.export_problem_child_convergence(
@@ -45,8 +51,8 @@ function vertex_name_parser(vertex_name::String)::String
     return new_name * "]"
 end
 
-entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", e)
-model = lab2mslbo.__build_ub_model(entrypoint.inputs.files)
+entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", optimizer, e)
+model = lab2mslbo.__build_ub_model(entrypoint.inputs.files, optimizer)
 
 lab2mslbo.read_vertices_from_file(
     model,
@@ -62,7 +68,9 @@ policy_task_index = findfirst(x -> isa(x, SDDPlab.Tasks.Policy), task_definition
 policy_task_definition = task_definitions[policy_task_index]
 
 artifacts = Vector{SDDPlab.Tasks.TaskArtifact}([
-    SDDPlab.Tasks.InputsArtifact(entrypoint.inputs.path, entrypoint.inputs.files),
+    SDDPlab.Tasks.InputsArtifact(
+        entrypoint.inputs.path, entrypoint.inputs.files, optimizer
+    ),
     SDDPlab.Tasks.PolicyArtifact(policy_task_definition, model, entrypoint.inputs.files),
 ])
 

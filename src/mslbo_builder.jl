@@ -11,16 +11,17 @@ Build a `DualSDDP.MSLBO` object from a `SDDPlab` input data directory
   - `α::Vector{Float64}`: Upper bound on the Lipschitz constant at each stage
 """
 function build_mslbo(
-    data_dir::String;
+    data_dir::String,
+    optimizer;
     fun_problem_ub::Function = default_guess,
     fun_α::Function = default_guess,
 )::Tuple{DualSDDP.MSLBO,LabData}
-    files = read_lab_inputs(data_dir)
+    files = read_lab_inputs(data_dir, optimizer)
     seed = get_seed(files)
     problem_ub = fun_problem_ub(files)
     α = fun_α(files)
 
-    aux, saa = build_sddp_model(files)
+    aux, saa = build_sddp_model(files, optimizer)
     initial_states = get_initial_states(files)
 
     lbos = Vector{DualSDDP.SimpleLBO}()
@@ -46,7 +47,6 @@ function build_mslbo(
     risk_parameters = get_risk_measure_parameters(files)
     num_iterations = get_num_iterations(files)
     output_path = get_output_path(files)
-    solver = get_solver(files)
     writer = get_writer(files)
     extension = get_extension(files)
     data = LabData(
@@ -57,7 +57,6 @@ function build_mslbo(
         output_path,
         risk_parameters[1],
         risk_parameters[2],
-        solver,
         writer,
         extension,
     )
@@ -82,13 +81,13 @@ function default_guess(files::Vector{SDDPlab.Inputs.InputModule})
     return guess
 end
 
-function read_lab_inputs(data_dir::String)::Vector{SDDPlab.Inputs.InputModule}
+function read_lab_inputs(data_dir::String, optimizer)::Vector{SDDPlab.Inputs.InputModule}
     original_wd = pwd()
 
     cd(data_dir)
 
     e = CompositeException()
-    entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", e)
+    entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", optimizer, e)
 
     if length(e) > 0
         for exc in e
@@ -117,11 +116,6 @@ end
 
 function get_num_stages(files::Vector{SDDPlab.Inputs.InputModule})
     return SDDPlab.Inputs.get_number_of_stages(SDDPlab.Inputs.get_algorithm(files))
-end
-
-function get_solver(files::Vector{SDDPlab.Inputs.InputModule})
-    resources = SDDPlab.Inputs.get_resources(files)
-    return SDDPlab.Inputs.generate_optimizer(resources.solver)
 end
 
 function get_num_iterations(files::Vector{SDDPlab.Inputs.InputModule})
@@ -169,8 +163,8 @@ A `Tuple` containing two elements: the first is an `SDDP.PolicyGraph` containing
 second is the Sample Average Aproximation built, i.e., noises for every stage, branch and random
 element (in that order) in a `Vector{Vector{Vector}}`
 """
-function build_sddp_model(files::Vector{SDDPlab.Inputs.InputModule})::Tuple
-    model = SDDPlab.Tasks.__build_model(files)
+function build_sddp_model(files::Vector{SDDPlab.Inputs.InputModule}, optimizer)::Tuple
+    model = SDDPlab.Tasks.__build_model(files, optimizer)
 
     scenarios = SDDPlab.Inputs.get_scenarios(files)
     num_stages = get_num_stages(files)

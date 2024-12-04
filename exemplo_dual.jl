@@ -1,3 +1,5 @@
+using JuMP
+using HiGHS
 using DualSDDP
 using SDDPlab: SDDPlab
 using Random: seed!
@@ -6,12 +8,15 @@ using DataFrames
 
 deck_dir = "./data-1dtoy/"
 
+optimizer = optimizer_with_attributes(HiGHS.Optimizer)
+set_attribute(optimizer, "log_to_console", false)
+
 curdir = pwd()
 cd(deck_dir)
-SDDPlab.main()
+SDDPlab.main(optimizer)
 cd(curdir)
 
-M, data = lab2mslbo.build_mslbo(deck_dir)
+M, data = lab2mslbo.build_mslbo(deck_dir, optimizer)
 
 mkpath(deck_dir * data.output_path)
 
@@ -24,7 +29,7 @@ ub_iters = Int64.(2 .^ (4:1:floor(log2(data.num_iterations))))
 # Pure primal
 seed!(data.seed)
 primal_pb, primal_trajs, primal_lbs, primal_times = primalsolve(
-    M, data.num_stages, risk, data.solver, data.state0, data.num_iterations; verbose = true
+    M, data.num_stages, risk, optimizer, data.state0, data.num_iterations; verbose = true
 );
 
 # Pure dual
@@ -33,7 +38,7 @@ dual_pb, dual_ubs, dual_times = dualsolve(
     M,
     data.num_stages,
     risk_dual,
-    data.solver,
+    optimizer,
     data.state0,
     data.num_iterations;
     verbose = true,
@@ -41,13 +46,13 @@ dual_pb, dual_ubs, dual_times = dualsolve(
 
 # Recursive upper bounds over primal trajectories
 rec_ubs, rec_times = primalub(
-    M, data.num_stages, risk, data.solver, primal_trajs, ub_iters; verbose = true
+    M, data.num_stages, risk, optimizer, primal_trajs, ub_iters; verbose = true
 );
 
 # Primal with outer and inner bounds
 seed!(data.seed)
 io_pb, io_lbs, io_ubs, io_times = problem_child_solve(
-    M, data.num_stages, risk, data.solver, data.state0, data.num_iterations; verbose = true
+    M, data.num_stages, risk, optimizer, data.state0, data.num_iterations; verbose = true
 );
 
 ## Exporting outputs
