@@ -1,9 +1,15 @@
 using DualSDDP
+using JuMP
 using SDDPlab: SDDPlab
 using Random: seed!
 using lab2mslbo: lab2mslbo
+using HiGHS
 
 deck_dir = "./data-1dtoy/"
+
+optimizer = optimizer_with_attributes(HiGHS.Optimizer)
+set_attribute(optimizer, "log_to_console", false)
+
 curdir = pwd()
 e = CompositeException()
 
@@ -12,7 +18,7 @@ e = CompositeException()
 cd(deck_dir)
 
 # Runs policy evaluation
-entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", e)
+entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", optimizer, e)
 artifacts = SDDPlab.__run_tasks!(entrypoint, e)
 SDDPlab.__log_errors(e)
 
@@ -22,7 +28,7 @@ policy = artifacts[policy_index].policy
 
 # Transforms to vertex policy graph
 inner_policy, upper_bound, upper_bound_time = lab2mslbo.__build_and_compute_ub_model(
-    entrypoint.inputs.files, policy
+    entrypoint.inputs.files, policy, optimizer
 )
 
 lab2mslbo.__update_convergence_file(
@@ -35,7 +41,9 @@ policy_task_index = findfirst(x -> isa(x, SDDPlab.Tasks.Policy), task_definition
 policy_task_definition = task_definitions[policy_task_index]
 
 artifacts = Vector{SDDPlab.Tasks.TaskArtifact}([
-    SDDPlab.Tasks.InputsArtifact(entrypoint.inputs.path, entrypoint.inputs.files),
+    SDDPlab.Tasks.InputsArtifact(
+        entrypoint.inputs.path, entrypoint.inputs.files, optimizer
+    ),
     SDDPlab.Tasks.PolicyArtifact(
         policy_task_definition, inner_policy, entrypoint.inputs.files
     ),
@@ -51,7 +59,7 @@ SDDPlab.__save_results(a)
 
 cd(curdir)
 
-M, data = lab2mslbo.build_mslbo(deck_dir)
+M, data = lab2mslbo.build_mslbo(deck_dir, optimizer)
 
 mkpath(deck_dir * data.output_path)
 
@@ -64,7 +72,7 @@ ub_iters = Int64.(2 .^ (4:1:floor(log2(data.num_iterations))))
 # Pure primal
 seed!(data.seed)
 primal_pb, primal_trajs, primal_lbs, primal_times = primalsolve(
-    M, data.num_stages, risk, data.solver, data.state0, data.num_iterations; verbose = true
+    M, data.num_stages, risk, optimizer, data.state0, data.num_iterations; verbose = true
 );
 
 # Pure dual
@@ -73,7 +81,7 @@ dual_pb, dual_ubs, dual_times = dualsolve(
     M,
     data.num_stages,
     risk_dual,
-    data.solver,
+    optimizer,
     data.state0,
     data.num_iterations;
     verbose = true,
@@ -81,13 +89,13 @@ dual_pb, dual_ubs, dual_times = dualsolve(
 
 # Recursive upper bounds over primal trajectories
 rec_ubs, rec_times = primalub(
-    M, data.num_stages, risk, data.solver, primal_trajs, ub_iters; verbose = true
+    M, data.num_stages, risk, optimizer, primal_trajs, ub_iters; verbose = true
 );
 
 # Primal with outer and inner bounds
 seed!(data.seed)
 io_pb, io_lbs, io_ubs, io_times = problem_child_solve(
-    M, data.num_stages, risk, data.solver, data.state0, data.num_iterations; verbose = true
+    M, data.num_stages, risk, optimizer, data.state0, data.num_iterations; verbose = true
 );
 
 ## Exporting outputs
@@ -140,8 +148,8 @@ function vertex_name_parser(vertex_name::String)::String
     return new_name * "]"
 end
 
-entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", e)
-model = lab2mslbo.__build_ub_model(entrypoint.inputs.files)
+entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", optimizer, e)
+model = lab2mslbo.__build_ub_model(entrypoint.inputs.files, optimizer)
 
 lab2mslbo.read_vertices_from_file(
     model,
@@ -157,7 +165,9 @@ policy_task_index = findfirst(x -> isa(x, SDDPlab.Tasks.Policy), task_definition
 policy_task_definition = task_definitions[policy_task_index]
 
 artifacts = Vector{SDDPlab.Tasks.TaskArtifact}([
-    SDDPlab.Tasks.InputsArtifact(entrypoint.inputs.path, entrypoint.inputs.files),
+    SDDPlab.Tasks.InputsArtifact(
+        entrypoint.inputs.path, entrypoint.inputs.files, optimizer
+    ),
     SDDPlab.Tasks.PolicyArtifact(policy_task_definition, model, entrypoint.inputs.files),
 ])
 
