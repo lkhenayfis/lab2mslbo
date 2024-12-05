@@ -56,10 +56,11 @@ model = lab2mslbo.__build_ub_model(entrypoint.inputs.files, optimizer)
 
 lab2mslbo.read_vertices_from_file(
     model,
-    "out/policy/reagan_policy.json";
+    "out/policy/reagan_policy.json",
+    optimizer;
     dualcuts = false,
     vertex_name_parser = vertex_name_parser,
-    vertex_selection = false,
+    vertex_selection = true,
 )
 
 # Generates fake policy artifact and artifacts vector

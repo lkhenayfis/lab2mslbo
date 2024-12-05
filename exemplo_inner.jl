@@ -17,31 +17,35 @@ entrypoint = SDDPlab.Inputs.Entrypoint("main.jsonc", optimizer, e)
 artifacts = SDDPlab.__run_tasks!(entrypoint, e)
 SDDPlab.__log_errors(e)
 
+files = entrypoint.inputs.files
+
 # Build and eval ub model
 policy_index = findfirst(x -> isa(x, SDDPlab.Tasks.PolicyArtifact), artifacts)
+policy_task = artifacts[policy_index].task
 policy = artifacts[policy_index].policy
+ub_iterations = Int64.(2 .^ (4:1:floor(log2(policy_task.convergence.max_iterations))))
 
-# Transforms to vertex policy graph
-inner_policy, upper_bound, upper_bound_time = lab2mslbo.__build_and_compute_ub_model(
-    entrypoint.inputs.files, policy, optimizer
+cut_source_path = policy_task.results.path * "/cuts.parquet"
+cut_path = policy_task.results.path * "/cuts.json"
+
+reader = lab2mslbo.get_reader(files)
+cuts = reader(cut_source_path, e)
+lab2mslbo.translate_cut_df_to_json(cuts, cut_path)
+
+inner_policy, upper_bounds, upper_bound_times = lab2mslbo.__build_model_and_compute_ub_at_iterations(
+    files, optimizer, cut_path, ub_iterations
 )
 
-lab2mslbo.__update_convergence_file(
-    entrypoint.inputs.files, upper_bound, upper_bound_time, e
-)
+lab2mslbo.__update_convergence_file(files, upper_bound, upper_bound_time, e)
 
 # Generates fake policy artifact and artifact vector
-task_definitions = SDDPlab.get_tasks(entrypoint.inputs.files)
+task_definitions = SDDPlab.get_tasks(files)
 policy_task_index = findfirst(x -> isa(x, SDDPlab.Tasks.Policy), task_definitions)
 policy_task_definition = task_definitions[policy_task_index]
 
 artifacts = Vector{SDDPlab.Tasks.TaskArtifact}([
-    SDDPlab.Tasks.InputsArtifact(
-        entrypoint.inputs.path, entrypoint.inputs.files, optimizer
-    ),
-    SDDPlab.Tasks.PolicyArtifact(
-        policy_task_definition, inner_policy, entrypoint.inputs.files
-    ),
+    SDDPlab.Tasks.InputsArtifact(entrypoint.inputs.path, files, optimizer),
+    SDDPlab.Tasks.PolicyArtifact(policy_task_definition, inner_policy, files),
 ])
 
 # Runs simulation again

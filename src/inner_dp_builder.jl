@@ -95,6 +95,34 @@ function __build_and_compute_ub_model(
     return outer_model, upper_bound, upper_bound_time
 end
 
+function __build_model_and_compute_ub_at_iterations(
+    files::Vector{SDDPlab.Inputs.InputModule}, optimizer, cut_path, iterations
+)
+    risk = SDDPlab.get_tasks(files)[2].risk_measure
+    risk_measure = SDDPlab.Tasks.generate_risk_measure(risk)
+
+    model = __build_ub_model(files, optimizer)
+    upper_bounds = []
+    times = []
+
+    for iteration in iterations[1:2]
+        model = __build_ub_model(files, optimizer)
+        read_vertices_from_file(
+            model,
+            cut_path,
+            optimizer;
+            dualcuts = false,
+            primalcuts = true,
+            vertex_selection = false,
+            max_vertices = iteration,
+        )
+        ub, dt = compute_inner_dp(model; optimizer, risk_measures = risk_measure)
+        push!(upper_bounds, ub)
+        push!(times, dt)
+    end
+    return model, upper_bounds, times
+end
+
 function __generate_subproblem_builder(files::Vector{SDDPlab.Inputs.InputModule})::Function
     system = SDDPlab.Inputs.get_system(files)
     scenarios = SDDPlab.Inputs.get_scenarios(files)
@@ -192,4 +220,54 @@ function __update_convergence_file(
     convergence_df[!, "time"] =
         convergence_df[!, "primal_time"] + convergence_df[!, "upper_bound_time"]
     return writer(filename, convergence_df)
+end
+
+function __add_cuts_from_stage!(
+    cutdata::Vector{Dict{String,Any}}, cuts::DataFrame, node::Int64
+)
+    stage_cuts = filter(row -> row["stage"] == node, cuts)
+    cut_indexes = Int64.(unique(stage_cuts[!, "cut_index"]))
+    nodedata = Dict{String,Any}(
+        "risk_set_cuts" => [], "node" => string(node), "multi_cuts" => []
+    )
+    single_cuts = Dict{String,Any}[]
+    for cut_index in cut_indexes
+        cut_rows = filter(row -> row["cut_index"] == cut_index, stage_cuts)
+        intercept = 0.0
+        states = Dict{String,Float64}()
+        coefficients = Dict{String,Float64}()
+        for cut_coef in eachrow(cut_rows)
+            if (cut_coef["state_variable_name"] == "INTERCEPT")
+                intercept += cut_coef["state"]
+            else
+                key = "$(cut_coef["state_variable_name"])[$(cut_coef["state_variable_id"])]"
+                state_value = cut_coef["state"]
+                coefficient_value = cut_coef["coefficient"]
+                push!(states, key => state_value)
+                push!(coefficients, key => coefficient_value)
+            end
+        end
+        push!(
+            single_cuts,
+            Dict{String,Any}(
+                "state" => states, "intercept" => intercept, "coefficients" => coefficients
+            ),
+        )
+    end
+    nodedata["single_cuts"] = single_cuts
+    return push!(cutdata, nodedata)
+end
+
+function translate_cut_df_to_json(cuts::DataFrame, cut_path::String)
+    jsondata = Dict{String,Any}[]
+    stages = Int64.(unique(cuts[!, "stage"]))
+    for stage in stages
+        __add_cuts_from_stage!(jsondata, cuts, stage)
+    end
+    # Adds for the last node
+    __add_cuts_from_stage!(jsondata, cuts, maximum(stages) + 1)
+    # Writes json
+    open(cut_path, "w") do f
+        JSON.print(f, jsondata)
+    end
 end

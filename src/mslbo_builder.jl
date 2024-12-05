@@ -122,6 +122,11 @@ function get_num_iterations(files::Vector{SDDPlab.Inputs.InputModule})
     return SDDPlab.get_tasks(files)[2].convergence.max_iterations
 end
 
+function get_reader(files::Vector{SDDPlab.Inputs.InputModule})::Function
+    result_format = SDDPlab.get_tasks(files)[2].results.format
+    return SDDPlab.get_reader(result_format)
+end
+
 function get_writer(files::Vector{SDDPlab.Inputs.InputModule})::Function
     result_format = SDDPlab.get_tasks(files)[2].results.format
     return SDDPlab.get_writer(result_format)

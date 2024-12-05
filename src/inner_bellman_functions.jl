@@ -523,14 +523,74 @@ function build_compute_inner_dp(
     return pb_inner, ub, total_dt
 end
 
+function compute_inner_dp(
+    pb_inner::SDDP.PolicyGraph;
+    optimizer,
+    risk_measures::SDDP.AbstractRiskMeasure,
+    print_level::Int = 1,
+)
+    println(pb_inner.initial_root_state)
+    opts = SDDP.Options(pb_inner, pb_inner.initial_root_state; risk_measures)
+    T = model_type(pb_inner)
+    total_dt = 0.0
+    for node_index in sort(collect(keys(pb_inner.nodes)); rev = true)[2:end]
+        dt = @elapsed begin
+            println(node_index)
+            node = pb_inner[node_index]
+            fw_vertices = pb_inner[node_index].bellman_function.global_theta.vertices
+            sampled_states = [vertex.state for vertex in fw_vertices]
+            println(length(sampled_states))
+            for outgoing_state in sampled_states
+                items = SDDP.BackwardPassItems(T, SDDP.Noise)
+                SDDP.solve_all_children(
+                    pb_inner,
+                    node,
+                    items,
+                    1.0,
+                    nothing, # belief_state
+                    nothing, # objective_state
+                    outgoing_state,
+                    opts.backward_sampling_scheme,
+                    Tuple{T,Any}[], # scenario_path
+                    opts.duality_handler,
+                    opts,
+                )
+                refine_inner_bellman_function(
+                    pb_inner,
+                    node,
+                    node.bellman_function,
+                    opts.risk_measures[node_index],
+                    outgoing_state,
+                    items.duals,
+                    items.supports,
+                    items.probability,
+                    items.objectives,
+                )
+            end
+        end
+        dt_vs = @elapsed _vertex_selection(node.bellman_function.global_theta, optimizer)
+        total_dt += dt + dt_vs
+    end
+
+    ub = SDDP.calculate_bound(pb_inner; risk_measure = risk_measures)
+    if print_level > 0
+        println("First-stage upper bound: ", ub)
+        println("Total time for upper bound: ", total_dt)
+    end
+    return ub, total_dt
+end
+
 function _get_vertex_info(
-    json_vertex, dualcuts; vertex_name_parser::Function = _vertex_name_parser
+    json_vertex, dualcuts, primalcuts; vertex_name_parser::Function = _vertex_name_parser
 )
     if dualcuts
         value = -json_vertex["intercept"]
         state = Dict(
             Symbol(vertex_name_parser(k)) => v for (k, v) in json_vertex["coefficients"]
         )
+    elseif primalcuts
+        value = json_vertex["intercept"]
+        state = Dict(Symbol(vertex_name_parser(k)) => v for (k, v) in json_vertex["state"])
     else
         value = json_vertex["value"]
         state = Dict(Symbol(vertex_name_parser(k)) => v for (k, v) in json_vertex["state"])
@@ -547,7 +607,8 @@ end
 """
     read_vertices_from_file(
         model::PolicyGraph{T},
-        filename::String;
+        filename::String,
+        optimizer;
         kwargs...,
     ) where {T}
 
@@ -570,11 +631,14 @@ type `T`, provide a function `node_name_parser` with the signature
 """
 function read_vertices_from_file(
     model::SDDP.PolicyGraph{T},
-    filename::String;
+    filename::String,
+    optimizer;
     dualcuts::Bool = false,
+    primalcuts::Bool = false,
     node_name_parser::Function = (::Type{Int64}, x::String) -> parse(Int64, x),
     vertex_name_parser::Function = _vertex_name_parser,
     vertex_selection::Bool = true,
+    max_vertices::Union{Nothing,Int64} = nothing,
 ) where {T}
     vertices = JSON.parsefile(filename; use_mmap = false)
     for node_info in vertices
@@ -585,10 +649,22 @@ function read_vertices_from_file(
         node = model[node_name]
         bf = node.bellman_function
         # Loop through and add the vertices.
-        list = (dualcuts ? node_info["single_cuts"] : node_info["vertices"])
+        if dualcuts || primalcuts
+            list = node_info["single_cuts"]
+        else
+            list = node_info["vertices"]
+        end
+
+        if isnothing(max_vertices)
+            list = list
+        elseif length(list) >= max_vertices
+            list = list[1:max_vertices]
+        else
+            list = list
+        end
         for json_vertex in list
             value, state, obj_y, belief_y = _get_vertex_info(
-                json_vertex, dualcuts; vertex_name_parser = vertex_name_parser
+                json_vertex, dualcuts, primalcuts; vertex_name_parser = vertex_name_parser
             )
             _add_vertex(bf.global_theta, value, state, obj_y, belief_y)
         end
@@ -604,10 +680,16 @@ function read_vertices_from_file(
         if length(node_info["risk_set_cuts"]) > 0
             _add_locals_if_necessary(node, bf, length(first(node_info["risk_set_cuts"])))
         end
-        list = (dualcuts ? node_info["multi_cuts"] : node_info["multi_vertices"])
+        if dualcuts || primalcuts
+            list = node_info["multi_cuts"]
+        else
+            list = node_info["multi_vertices"]
+        end
         for json_vertex in list
             @error "Multi-vertices not yet implemented."
-            value, state, obj_y, belief_y = _get_vertex_info(json_vertex, dualcuts)
+            value, state, obj_y, belief_y = _get_vertex_info(
+                json_vertex, dualcuts, primalcuts; vertex_name_parser = vertex_name_parser
+            )
             _add_vertex(
                 bf.local_thetas[json_vertex["realization"]], value, state, obj_y, belief_y
             )
