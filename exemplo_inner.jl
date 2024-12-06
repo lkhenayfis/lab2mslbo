@@ -32,11 +32,11 @@ reader = lab2mslbo.get_reader(files)
 cuts = reader(cut_source_path, e)
 lab2mslbo.translate_cut_df_to_json(cuts, cut_path)
 
-inner_policy, upper_bounds, upper_bound_times = lab2mslbo.__build_model_and_compute_ub_at_iterations(
+inner_policy, ubs, ub_times = lab2mslbo.__build_model_and_compute_ub_at_iterations(
     files, optimizer, cut_path, ub_iterations
 )
 
-lab2mslbo.__update_convergence_file(files, upper_bound, upper_bound_time, e)
+lab2mslbo.__update_convergence_file(files, ub_iterations, ubs, ub_times, e)
 
 # Generates fake policy artifact and artifact vector
 task_definitions = SDDPlab.get_tasks(files)
