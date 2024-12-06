@@ -11,11 +11,6 @@ deck_dir = "./data-1dtoy/"
 optimizer = optimizer_with_attributes(HiGHS.Optimizer)
 set_attribute(optimizer, "log_to_console", false)
 
-curdir = pwd()
-cd(deck_dir)
-SDDPlab.main(optimizer)
-cd(curdir)
-
 M, data = lab2mslbo.build_mslbo(deck_dir, optimizer)
 
 mkpath(deck_dir * data.output_path)
