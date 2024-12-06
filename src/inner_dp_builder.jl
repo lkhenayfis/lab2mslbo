@@ -154,7 +154,7 @@ function __generate_subproblem_builder(files::Vector{SDDPlab.Inputs.InputModule}
 
     function fun_sp_build(m::JuMP.Model, node::Integer)
         SDDPlab.System.add_system_elements!(m, system)
-        SDDPlab.Scenarios.add_uncertainties!(m, scenarios)
+        SDDPlab.Scenarios.add_uncertainties!(m, scenarios, node)
 
         # TODO - this will change once we have a proper load representation
         # as an stochastic process

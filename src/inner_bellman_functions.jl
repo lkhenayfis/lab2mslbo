@@ -293,6 +293,8 @@ function SDDP.initialize_bellman_function(
     obj_μ = node.objective_state !== nothing ? node.objective_state.μ : nothing
     belief_μ = node.belief_state !== nothing ? node.belief_state.μ : nothing
 
+    VERTEX_COVERAGE_DISTANCE = SDDPlab.Core.VERTEX_COVERAGE_DISTANCE
+
     # Model convex combination + Lipschitz penalty
     if length(node.children) != 0
         @variable(sp, δ[keys(x′)])
@@ -313,11 +315,11 @@ function SDDP.initialize_bellman_function(
         @constraint(sp, x_cc[k in keys(x′)], δ[k] == x′[k])
         @constraint(sp, σ_cc, σ0 == 1)
 
-        @expression(sp, VERTEX_COVERAGE_DISTANCE, sum(δ_abs))
+        sp[VERTEX_COVERAGE_DISTANCE] = @expression(sp, sum(δ_abs))
 
     else
         JuMP.fix(Θᴳ, 0.0)
-        @expression(sp, VERTEX_COVERAGE_DISTANCE, 0.0)
+        sp[VERTEX_COVERAGE_DISTANCE] = @expression(sp, 0.0)
     end
 
     return InnerBellmanFunction(
