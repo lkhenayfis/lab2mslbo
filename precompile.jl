@@ -24,6 +24,7 @@ SDDPlab.__log_errors(e)
 
 # Build and eval ub model
 policy_index = findfirst(x -> isa(x, SDDPlab.Tasks.PolicyArtifact), artifacts)
+policy_task = artifacts[policy_index].task
 policy = artifacts[policy_index].policy
 
 # Transforms to vertex policy graph
@@ -32,7 +33,11 @@ inner_policy, upper_bound, upper_bound_time = lab2mslbo.__build_and_compute_ub_m
 )
 
 lab2mslbo.__update_convergence_file(
-    entrypoint.inputs.files, upper_bound, upper_bound_time, e
+    entrypoint.inputs.files,
+    [policy_task.convergence.max_iterations],
+    [upper_bound],
+    [upper_bound_time],
+    e,
 )
 
 # Generates fake policy artifact and artifact vector
