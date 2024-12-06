@@ -450,6 +450,7 @@ function build_compute_inner_dp(
     upper_bound::Float64 = Inf,
     bellman_function,
     risk_measures::SDDP.AbstractRiskMeasure,
+    vertex_pb::Bool = false,
     print_level::Int = 1,
 )
     pb_inner = SDDP.LinearPolicyGraph(
@@ -472,9 +473,13 @@ function build_compute_inner_dp(
     for node_index in sort(collect(keys(pb.nodes)); rev = true)[2:end]
         dt = @elapsed begin
             node = pb_inner[node_index]
-            fw_samples = pb[node_index].bellman_function.global_theta.sampled_states
-            for sampled_state in fw_samples
-                outgoing_state = sampled_state.state
+            if vertex_pb
+                fw_samples = pb[node_index].bellman_function.global_theta.vertices
+            else
+                fw_samples = pb[node_index].bellman_function.global_theta.sampled_states
+            end
+            sampled_states = [vertex.state for vertex in fw_samples]
+            for outgoing_state in sampled_states
                 items = SDDP.BackwardPassItems(T, SDDP.Noise)
                 SDDP.solve_all_children(
                     pb_inner,
@@ -521,63 +526,6 @@ function build_compute_inner_dp(
         println("Total time for upper bound: ", total_dt)
     end
     return pb_inner, ub, total_dt
-end
-
-function compute_inner_dp(
-    pb_inner::SDDP.PolicyGraph;
-    optimizer,
-    risk_measures::SDDP.AbstractRiskMeasure,
-    print_level::Int = 1,
-)
-    println(pb_inner.initial_root_state)
-    opts = SDDP.Options(pb_inner, pb_inner.initial_root_state; risk_measures)
-    T = model_type(pb_inner)
-    total_dt = 0.0
-    for node_index in sort(collect(keys(pb_inner.nodes)); rev = true)[2:end]
-        dt = @elapsed begin
-            println(node_index)
-            node = pb_inner[node_index]
-            fw_vertices = pb_inner[node_index].bellman_function.global_theta.vertices
-            sampled_states = [vertex.state for vertex in fw_vertices]
-            println(length(sampled_states))
-            for outgoing_state in sampled_states
-                items = SDDP.BackwardPassItems(T, SDDP.Noise)
-                SDDP.solve_all_children(
-                    pb_inner,
-                    node,
-                    items,
-                    1.0,
-                    nothing, # belief_state
-                    nothing, # objective_state
-                    outgoing_state,
-                    opts.backward_sampling_scheme,
-                    Tuple{T,Any}[], # scenario_path
-                    opts.duality_handler,
-                    opts,
-                )
-                refine_inner_bellman_function(
-                    pb_inner,
-                    node,
-                    node.bellman_function,
-                    opts.risk_measures[node_index],
-                    outgoing_state,
-                    items.duals,
-                    items.supports,
-                    items.probability,
-                    items.objectives,
-                )
-            end
-        end
-        dt_vs = @elapsed _vertex_selection(node.bellman_function.global_theta, optimizer)
-        total_dt += dt + dt_vs
-    end
-
-    ub = SDDP.calculate_bound(pb_inner; risk_measure = risk_measures)
-    if print_level > 0
-        println("First-stage upper bound: ", ub)
-        println("Total time for upper bound: ", total_dt)
-    end
-    return ub, total_dt
 end
 
 function _get_vertex_info(

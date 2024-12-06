@@ -37,7 +37,6 @@ end
 function __build_ub_model(
     files::Vector{SDDPlab.Inputs.InputModule}, optimizer
 )::SDDP.PolicyGraph
-    @info "Compiling upper model"
     sp_builder = __generate_subproblem_builder(files)
     algo = SDDPlab.Inputs.get_algorithm(files)
     num_stages = SDDPlab.Inputs.get_number_of_stages(algo)
@@ -98,14 +97,23 @@ end
 function __build_model_and_compute_ub_at_iterations(
     files::Vector{SDDPlab.Inputs.InputModule}, optimizer, cut_path, iterations
 )
+    @info "Evaluating upper policy"
+    sp_builder = __generate_subproblem_builder(files)
     risk = SDDPlab.get_tasks(files)[2].risk_measure
     risk_measure = SDDPlab.Tasks.generate_risk_measure(risk)
+    algo = SDDPlab.Inputs.get_algorithm(files)
+    num_stages = SDDPlab.Inputs.get_number_of_stages(algo)
+    lip_builder(t) = __default_α_guess(files, t)
+    ub_builder(t) = __default_ub_guess(files, t)
+    ibf = InnerBellmanFunction(
+        lip_builder; upper_bound = ub_builder, vertex_type = SDDP.SINGLE_CUT
+    )
 
-    model = __build_ub_model(files, optimizer)
-    upper_bounds = []
-    times = []
+    inner_model = __build_ub_model(files, optimizer)
+    upper_bounds = Vector{Float64}([])
+    times = Vector{Float64}([])
 
-    for iteration in iterations[1:2]
+    for iteration in iterations
         model = __build_ub_model(files, optimizer)
         read_vertices_from_file(
             model,
@@ -116,11 +124,21 @@ function __build_model_and_compute_ub_at_iterations(
             vertex_selection = false,
             max_vertices = iteration,
         )
-        ub, dt = compute_inner_dp(model; optimizer, risk_measures = risk_measure)
+        inner_model, ub, dt = build_compute_inner_dp(
+            sp_builder,
+            model;
+            num_stages = num_stages,
+            sense = :Min,
+            optimizer = optimizer,
+            lower_bound = 0.0,
+            bellman_function = ibf,
+            risk_measures = risk_measure,
+            vertex_pb = true,
+        )
         push!(upper_bounds, ub)
         push!(times, dt)
     end
-    return model, upper_bounds, times
+    return inner_model, upper_bounds, times
 end
 
 function __generate_subproblem_builder(files::Vector{SDDPlab.Inputs.InputModule})::Function
@@ -198,8 +216,9 @@ end
 
 function __update_convergence_file(
     files::Vector{SDDPlab.Inputs.InputModule},
-    upper_bound::Float64,
-    upper_bound_time::Float64,
+    ub_iterations::Vector{Int64},
+    ubs::Vector{Float64},
+    ub_times::Vector{Float64},
     e::CompositeException,
 )
     tasks = SDDPlab.Inputs.Tasks.get_tasks(files)
@@ -211,12 +230,16 @@ function __update_convergence_file(
     extension = SDDPlab.Inputs.Tasks.get_extension(policy_output_format)
     filename = policy_output_path * "/convergence" * extension
     convergence_df = reader(filename, e)
-    # Adds upper_bound
-    convergence_df[!, "upper_bound"] = fill(upper_bound, nrow(convergence_df))
-    # Adds upper_bound_time
+    niters = nrow(convergence_df)
+    convergence_df[!, "upper_bound"] = fill(NaN, niters)
+    convergence_df[!, "upper_bound_time"] = fill(0.0, niters)
     rename!(convergence_df, "time" => "primal_time")
-    convergence_df[!, "upper_bound_time"] = fill(0.0, nrow(convergence_df))
-    convergence_df[nrow(convergence_df), "upper_bound_time"] = upper_bound_time
+    for (i, iteration) in enumerate(ub_iterations)
+        # Adds upper_bound
+        convergence_df[iteration, "upper_bound"] = ubs[i]
+        # Adds upper_bound_time
+        convergence_df[iteration, "upper_bound_time"] = ub_times[i]
+    end
     convergence_df[!, "time"] =
         convergence_df[!, "primal_time"] + convergence_df[!, "upper_bound_time"]
     return writer(filename, convergence_df)
