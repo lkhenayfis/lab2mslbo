@@ -188,17 +188,3 @@ function translate_cuts_states(filename::String, vertex_name_parser::Function)
     end
     return nothing
 end
-
-function primal_cuts_json_to_table(
-    pb::DualSDDP.MSSP,
-    writer::Function,
-    extension::String;
-    output_path_without_extension::String = "./cuts",
-) end
-
-function dual_cuts_json_to_table(
-    pb::DualSDDP.MSSP,
-    writer::Function,
-    extension::String;
-    output_path_without_extension::String = "./cuts",
-) end

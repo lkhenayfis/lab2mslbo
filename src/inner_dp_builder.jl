@@ -37,7 +37,6 @@ end
 function __build_ub_model(
     files::Vector{SDDPlab.Inputs.InputModule}, optimizer
 )::SDDP.PolicyGraph
-    @info "Compiling upper model"
     sp_builder = __generate_subproblem_builder(files)
     algo = SDDPlab.Inputs.get_algorithm(files)
     num_stages = SDDPlab.Inputs.get_number_of_stages(algo)
@@ -93,6 +92,53 @@ function __build_and_compute_ub_model(
     )
 
     return outer_model, upper_bound, upper_bound_time
+end
+
+function __build_model_and_compute_ub_at_iterations(
+    files::Vector{SDDPlab.Inputs.InputModule}, optimizer, cut_path, iterations
+)
+    @info "Evaluating upper policy"
+    sp_builder = __generate_subproblem_builder(files)
+    risk = SDDPlab.get_tasks(files)[2].risk_measure
+    risk_measure = SDDPlab.Tasks.generate_risk_measure(risk)
+    algo = SDDPlab.Inputs.get_algorithm(files)
+    num_stages = SDDPlab.Inputs.get_number_of_stages(algo)
+    lip_builder(t) = __default_α_guess(files, t)
+    ub_builder(t) = __default_ub_guess(files, t)
+    ibf = InnerBellmanFunction(
+        lip_builder; upper_bound = ub_builder, vertex_type = SDDP.SINGLE_CUT
+    )
+
+    inner_model = __build_ub_model(files, optimizer)
+    upper_bounds = Vector{Float64}([])
+    times = Vector{Float64}([])
+
+    for iteration in iterations
+        model = __build_ub_model(files, optimizer)
+        read_vertices_from_file(
+            model,
+            cut_path,
+            optimizer;
+            dualcuts = false,
+            primalcuts = true,
+            vertex_selection = false,
+            max_vertices = iteration,
+        )
+        inner_model, ub, dt = build_compute_inner_dp(
+            sp_builder,
+            model;
+            num_stages = num_stages,
+            sense = :Min,
+            optimizer = optimizer,
+            lower_bound = 0.0,
+            bellman_function = ibf,
+            risk_measures = risk_measure,
+            vertex_pb = true,
+        )
+        push!(upper_bounds, ub)
+        push!(times, dt)
+    end
+    return inner_model, upper_bounds, times
 end
 
 function __generate_subproblem_builder(files::Vector{SDDPlab.Inputs.InputModule})::Function
@@ -170,8 +216,9 @@ end
 
 function __update_convergence_file(
     files::Vector{SDDPlab.Inputs.InputModule},
-    upper_bound::Float64,
-    upper_bound_time::Float64,
+    ub_iterations::Vector{Int64},
+    ubs::Vector{Float64},
+    ub_times::Vector{Float64},
     e::CompositeException,
 )
     tasks = SDDPlab.Inputs.Tasks.get_tasks(files)
@@ -183,13 +230,67 @@ function __update_convergence_file(
     extension = SDDPlab.Inputs.Tasks.get_extension(policy_output_format)
     filename = policy_output_path * "/convergence" * extension
     convergence_df = reader(filename, e)
-    # Adds upper_bound
-    convergence_df[!, "upper_bound"] = fill(upper_bound, nrow(convergence_df))
-    # Adds upper_bound_time
+    niters = nrow(convergence_df)
+    convergence_df[!, "upper_bound"] = fill(NaN, niters)
+    convergence_df[!, "upper_bound_time"] = fill(0.0, niters)
     rename!(convergence_df, "time" => "primal_time")
-    convergence_df[!, "upper_bound_time"] = fill(0.0, nrow(convergence_df))
-    convergence_df[nrow(convergence_df), "upper_bound_time"] = upper_bound_time
+    for (i, iteration) in enumerate(ub_iterations)
+        # Adds upper_bound
+        convergence_df[iteration, "upper_bound"] = ubs[i]
+        # Adds upper_bound_time
+        convergence_df[iteration, "upper_bound_time"] = ub_times[i]
+    end
     convergence_df[!, "time"] =
         convergence_df[!, "primal_time"] + convergence_df[!, "upper_bound_time"]
     return writer(filename, convergence_df)
+end
+
+function __add_cuts_from_stage!(
+    cutdata::Vector{Dict{String,Any}}, cuts::DataFrame, node::Int64
+)
+    stage_cuts = filter(row -> row["stage"] == node, cuts)
+    cut_indexes = Int64.(unique(stage_cuts[!, "cut_index"]))
+    nodedata = Dict{String,Any}(
+        "risk_set_cuts" => [], "node" => string(node), "multi_cuts" => []
+    )
+    single_cuts = Dict{String,Any}[]
+    for cut_index in cut_indexes
+        cut_rows = filter(row -> row["cut_index"] == cut_index, stage_cuts)
+        intercept = 0.0
+        states = Dict{String,Float64}()
+        coefficients = Dict{String,Float64}()
+        for cut_coef in eachrow(cut_rows)
+            if (cut_coef["state_variable_name"] == "INTERCEPT")
+                intercept += cut_coef["state"]
+            else
+                key = "$(cut_coef["state_variable_name"])[$(cut_coef["state_variable_id"])]"
+                state_value = cut_coef["state"]
+                coefficient_value = cut_coef["coefficient"]
+                push!(states, key => state_value)
+                push!(coefficients, key => coefficient_value)
+            end
+        end
+        push!(
+            single_cuts,
+            Dict{String,Any}(
+                "state" => states, "intercept" => intercept, "coefficients" => coefficients
+            ),
+        )
+    end
+    nodedata["single_cuts"] = single_cuts
+    return push!(cutdata, nodedata)
+end
+
+function translate_cut_df_to_json(cuts::DataFrame, cut_path::String)
+    jsondata = Dict{String,Any}[]
+    stages = Int64.(unique(cuts[!, "stage"]))
+    for stage in stages
+        __add_cuts_from_stage!(jsondata, cuts, stage)
+    end
+    # Adds for the last node
+    __add_cuts_from_stage!(jsondata, cuts, maximum(stages) + 1)
+    # Writes json
+    open(cut_path, "w") do f
+        JSON.print(f, jsondata)
+    end
 end
