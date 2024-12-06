@@ -7,7 +7,7 @@
       // AR | PAR | HMM | ...
       "kind": "Naive",
       "params": {
-        "file": "inflow_scenarios.jsonc"
+        "file": "inflow_scenarios_naive.jsonc"
         // "marginal_models": [],
         // "copulas": []
       }
