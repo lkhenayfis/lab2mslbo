@@ -13,8 +13,8 @@ Build a `DualSDDP.MSLBO` object from a `SDDPlab` input data directory
 function build_mslbo(
     data_dir::String,
     optimizer;
-    fun_problem_ub::Function = default_guess,
-    fun_α::Function = default_guess,
+    fun_problem_ub::Function = default_guess_ub,
+    fun_α::Function = default_guess_α,
 )::Tuple{DualSDDP.MSLBO,LabData}
     files = read_lab_inputs(data_dir, optimizer)
     seed = get_seed(files)
@@ -64,7 +64,7 @@ function build_mslbo(
     return DualSDDP.build(lbos), data
 end
 
-function default_guess(files::Vector{SDDPlab.Inputs.InputModule})
+function default_guess_ub(files::Vector{SDDPlab.Inputs.InputModule})
     algo = SDDPlab.Inputs.get_algorithm(files)
     num_stages = SDDPlab.Inputs.get_number_of_stages(algo)
 
@@ -75,6 +75,22 @@ function default_guess(files::Vector{SDDPlab.Inputs.InputModule})
     for stage in range(1, num_stages)
         for bus in buses
             guess += bus.deficit_cost * SDDPlab.Scenarios.get_load(bus.id, stage, scens)
+        end
+    end
+
+    return guess
+end
+
+function default_guess_α(files::Vector{SDDPlab.Inputs.InputModule})
+    algo = SDDPlab.Inputs.get_algorithm(files)
+    num_stages = SDDPlab.Inputs.get_number_of_stages(algo)
+
+    buses = SDDPlab.System.get_buses_entities(SDDPlab.Inputs.get_system(files))
+
+    guess = 0.0
+    for stage in range(1, num_stages)
+        for bus in buses
+            guess += bus.deficit_cost
         end
     end
 
@@ -106,6 +122,15 @@ end
 function get_initial_states(files::Vector{SDDPlab.Inputs.InputModule})
     hydros = SDDPlab.System.get_hydros_entities(SDDPlab.Inputs.get_system(files))
     initial_states = [h.initial_storage for h in hydros]
+
+    # scenarios = SDDPlab.Inputs.get_scenarios(files)
+
+    # sp = scenarios.inflow.stochastic_process
+    # if typeof(sp) != SDDPlab.StochasticProcess.Naive
+    #     for sm in sp.signal_model
+    #         initial_states = cat(initial_states, sm.initial_values; dims = 1)
+    #     end
+    # end
 
     return initial_states
 end
